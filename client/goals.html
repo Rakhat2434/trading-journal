@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Trading Journal - Goals</title>
+  <meta name="description" content="Set and track your goals. Your roadmap to progress." />
+  <link rel="stylesheet" href="css/themes.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .nav-username {
+      max-width: 160px;
+      padding: 6px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-input);
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .nav-logout-btn {
+      padding: 6px 10px;
+      font-size: 11px;
+      line-height: 1;
+    }
+    @media (max-width: 600px) {
+      .nav-username { max-width: 100px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="/" class="navbar-brand">
+      <span class="brand-icon">TJ</span>
+      <span class="brand-name">TradingJournal</span>
+      <span class="brand-tag">v1.0</span>
+    </a>
+    <div class="navbar-nav">
+      <a href="/" class="nav-link">Journal</a>
+      <a href="/goals" class="nav-link active">Goals</a>
+      <span id="nav-username" class="nav-username"></span>
+      <button id="logout-btn" class="btn btn-ghost nav-logout-btn" type="button">Logout</button>
+      <button id="theme-btn">Dark Terminal</button>
+    </div>
+  </div>
+</nav>
+
+<div class="ticker-tape">
+  <span class="ticker-inner">
+    YOUR GOALS - SET TARGETS - TRACK PROGRESS - COMPLETE MISSIONS - LEVEL UP YOUR LIFE - STAY FOCUSED - EXECUTE THE PLAN - YOUR GOALS -
+  </span>
+</div>
+
+<main class="app-container page-content">
+  <div class="page-header">
+    <h1>Goals</h1>
+    <p>Define targets. Track progress. Execute the plan.</p>
+  </div>
+
+  <div class="goals-stats-bar" id="goals-stats">
+    <span class="stat-item stat-active">0 Active</span>
+    <span class="stat-item stat-completed">0 Completed</span>
+    <span class="stat-item stat-failed">0 Failed</span>
+  </div>
+
+  <div class="goals-layout">
+    <div id="goal-form-section">
+      <div class="panel">
+        <div class="panel-header">
+          <h2 id="goal-form-title">New Goal</h2>
+        </div>
+        <div class="panel-body">
+          <form id="goal-form" autocomplete="off">
+            <div class="form-group">
+              <label for="goal-title">Title *</label>
+              <input type="text" id="goal-title" class="form-control" placeholder="What do you want to achieve?" required maxlength="200" />
+            </div>
+
+            <div class="form-group">
+              <label for="goal-desc">Description</label>
+              <textarea id="goal-desc" class="form-control" placeholder="Why does this matter? How will you get there?" rows="3" maxlength="1000"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="goal-date">Target Date</label>
+              <input type="date" id="goal-date" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label for="goal-status">Status</label>
+              <select id="goal-status" class="form-control">
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="goal-progress">Progress: <span id="goal-progress-display">0%</span></label>
+              <div class="score-row">
+                <span class="score-label-sm">0</span>
+                <input type="range" id="goal-progress" min="0" max="100" value="0" />
+                <span class="score-label-sm">100</span>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" id="goal-submit-btn" class="btn btn-primary btn-full">Add Goal</button>
+              <button type="button" id="goal-cancel-btn" class="btn btn-ghost" style="display:none;">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="list-controls" style="margin-bottom:16px;">
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="active">Active</button>
+          <button class="filter-btn" data-filter="completed">Done</button>
+          <button class="filter-btn" data-filter="failed">Failed</button>
+        </div>
+      </div>
+
+      <div id="loading-state" class="loading-state">
+        <div class="spinner"></div>
+        Loading goals...
+      </div>
+
+      <div id="goals-grid" class="goals-grid"></div>
+
+      <div id="goals-empty" class="empty-state" style="display:none;">
+        <div class="empty-icon">-</div>
+        <h3>No goals yet</h3>
+        <p>Add your first goal to start tracking your targets.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast-container" aria-live="polite"></div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/goals.js"></script>
+</body>
+</html>

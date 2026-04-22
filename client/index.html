@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Trading Journal - Daily Candles</title>
+  <meta name="description" content="Track your life like a trading chart. One candle per day." />
+  <link rel="stylesheet" href="css/themes.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .nav-username {
+      max-width: 160px;
+      padding: 6px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-input);
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .nav-logout-btn {
+      padding: 6px 10px;
+      font-size: 11px;
+      line-height: 1;
+    }
+    @media (max-width: 600px) {
+      .nav-username { max-width: 100px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="/" class="navbar-brand">
+      <span class="brand-icon">TJ</span>
+      <span class="brand-name">TradingJournal</span>
+      <span class="brand-tag">v1.0</span>
+    </a>
+    <div class="navbar-nav">
+      <a href="/" class="nav-link active">Journal</a>
+      <a href="/goals" class="nav-link">Goals</a>
+      <span id="nav-username" class="nav-username"></span>
+      <button id="logout-btn" class="btn btn-ghost nav-logout-btn" type="button">Logout</button>
+      <button id="theme-btn">Dark Terminal</button>
+    </div>
+  </div>
+</nav>
+
+<div class="ticker-tape">
+  <span class="ticker-inner">
+    LIFE INDEX - ONE CANDLE PER DAY - TRACK YOUR PROGRESS - CHART YOUR JOURNEY - GREEN = GOOD DAY - RED = LEARNING DAY - KEEP YOUR STREAK ALIVE - LIFE INDEX -
+  </span>
+</div>
+
+<main class="app-container page-content">
+  <div class="page-header">
+    <h1>Daily Journal</h1>
+    <p>One candle per day. Green or red. Your life as a trading chart.</p>
+  </div>
+
+  <div class="summary-bar">
+    <div class="summary-card">
+      <div class="summary-label">Green Days</div>
+      <div class="summary-value green" id="total-green">-</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Red Days</div>
+      <div class="summary-value red" id="total-red">-</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Green Streak</div>
+      <div class="summary-value accent" id="current-streak">-</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Avg Score</div>
+      <div class="summary-value plain" id="avg-score">-</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <div id="entry-form-section">
+      <div class="panel">
+        <div class="panel-header">
+          <h2 id="form-title">New Day Entry</h2>
+        </div>
+        <div class="panel-body">
+          <form id="entry-form" autocomplete="off">
+            <div class="form-group">
+              <label for="entry-date">Date</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="date" id="entry-date" class="form-control" required />
+                <button type="button" id="today-btn">TODAY</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Day Type</label>
+              <div class="type-select-row">
+                <div class="type-option">
+                  <input type="radio" name="entry-type" id="type-green" value="green" checked />
+                  <label for="type-green" class="green-label">Green</label>
+                </div>
+                <div class="type-option">
+                  <input type="radio" name="entry-type" id="type-red" value="red" />
+                  <label for="type-red" class="red-label">Red</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="entry-title">Title</label>
+              <input type="text" id="entry-title" class="form-control" placeholder="What defined this day?" required maxlength="200" />
+            </div>
+
+            <div class="form-group">
+              <label for="entry-note">Note</label>
+              <textarea id="entry-note" class="form-control" placeholder="What happened? What did you learn?" rows="4" required maxlength="2000"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="entry-score">Day Score</label>
+              <div class="score-row">
+                <span class="score-label-sm">1</span>
+                <input type="range" id="entry-score" min="1" max="10" value="5" />
+                <span class="score-label-sm">10</span>
+                <span class="score-display" id="score-display">5</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="entry-tags">Tags <span class="label-hint">(comma-separated, optional)</span></label>
+              <input type="text" id="entry-tags" class="form-control" placeholder="health, work, growth..." />
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" id="submit-btn" class="btn btn-primary btn-full">Add Entry</button>
+              <button type="button" id="cancel-edit-btn" class="btn btn-ghost" style="display:none;">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-col">
+      <div class="chart-section">
+        <div class="chart-header">
+          <span class="chart-title">Life Progress Index</span>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot green"></span>Green</span>
+            <span class="legend-item"><span class="legend-dot red"></span>Red</span>
+          </div>
+        </div>
+        <div class="chart-scroll-container">
+          <canvas id="candle-chart"></canvas>
+        </div>
+        <div class="chart-hint">Click any candle to see details</div>
+      </div>
+
+      <div class="list-controls">
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="green">Green</button>
+          <button class="filter-btn" data-filter="red">Red</button>
+        </div>
+        <button id="sort-btn">Newest</button>
+      </div>
+
+      <div id="loading-state" class="loading-state">
+        <div class="spinner"></div>
+        Loading entries...
+      </div>
+
+      <div id="entries-list" class="entries-list"></div>
+
+      <div id="empty-state" class="empty-state" style="display:none;">
+        <div class="empty-icon">-</div>
+        <h3>No entries yet</h3>
+        <p>Add your first day candle to start tracking your life chart.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="candle-modal-overlay" class="modal-overlay"></div>
+<div id="candle-modal" class="candle-modal" role="dialog" aria-modal="true">
+  <button id="candle-modal-close" class="modal-close-btn" aria-label="Close">X</button>
+  <div id="candle-modal-content"></div>
+</div>
+
+<div id="toast-container" aria-live="polite"></div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

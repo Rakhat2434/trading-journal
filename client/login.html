@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trading Journal - Login</title>
+  <link rel="stylesheet" href="css/themes.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .auth-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+      position: relative;
+    }
+    .auth-theme-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+    }
+    .auth-container {
+      width: 100%;
+      max-width: 460px;
+    }
+    .auth-card {
+      width: 100%;
+    }
+    .auth-message {
+      min-height: 20px;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+    .auth-message.error { color: #d1242f; }
+    .auth-message.success { color: #1a7f37; }
+    .auth-footer {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .auth-footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .auth-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body class="auth-page">
+  <button id="theme-btn" class="auth-theme-btn">Dark Terminal</button>
+
+  <main class="auth-container">
+    <section class="auth-card panel">
+      <div class="panel-header">
+        <h2>Login</h2>
+      </div>
+      <div class="panel-body">
+        <form id="login-form" autocomplete="off">
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input id="login-email" type="email" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input id="login-password" type="password" class="form-control" required />
+          </div>
+          <p id="auth-message" class="auth-message"></p>
+          <button id="login-submit-btn" type="submit" class="btn btn-primary btn-full">Login</button>
+        </form>
+        <p class="auth-footer">No account? <a href="/register.html">Register</a></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/theme.js"></script>
+</body>
+</html>
