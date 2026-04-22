@@ -1,104 +1,139 @@
-/**
- * chart.js — Custom candlestick chart renderer
+﻿/**
+ * chart.js - Custom candlestick chart renderer
  * Uses HTML Canvas. No external libraries.
- *
- * Logic:
- *   - Start value: 100
- *   - green day: close = open + score
- *   - red day:   close = open - score
- *   - wick:      high = Math.max(open, close) + score * 0.3
- *               low  = Math.min(open, close) - score * 0.3
  */
 
 const CandleChart = (() => {
-  // ── Config ─────────────────────────────────────────────────────────────────
-  const CANDLE_WIDTH = 28;
-  const CANDLE_GAP = 18;
-  const WICK_WIDTH = 2;
-  const CHART_PADDING = { top: 30, right: 20, bottom: 60, left: 60 };
-  const CHART_HEIGHT = 320;
-  const DATE_FONT = '11px "JetBrains Mono", monospace';
-  const AXIS_FONT = '11px "JetBrains Mono", monospace';
+  const BASE_CHART_HEIGHT = 320;
+  const MIN_CHART_HEIGHT = 280;
 
-  let canvas, ctx, entries = [], clickCallback = null;
-  let candleRects = []; // stores hit-test rects
-
-  // ── Public API ─────────────────────────────────────────────────────────────
+  let canvas;
+  let ctx;
+  let entries = [];
+  let clickCallback = null;
+  let candleRects = [];
+  let hoveredIdx = -1;
 
   function init(canvasId, onCandleClick) {
     canvas = document.getElementById(canvasId);
     if (!canvas) return;
+
     ctx = canvas.getContext('2d');
     clickCallback = onCandleClick;
-    canvas.addEventListener('click', _handleClick);
-    canvas.addEventListener('mousemove', _handleHover);
-    canvas.addEventListener('mouseleave', _handleLeave);
+
+    canvas.addEventListener('click', handleClick);
+    canvas.addEventListener('mousemove', handleHover);
+    canvas.addEventListener('mouseleave', handleLeave);
   }
 
   function render(journalEntries) {
     if (!canvas || !ctx) return;
 
-    // Sort entries by date ascending
-    entries = [...journalEntries].sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
-    );
+    entries = [...journalEntries].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    if (entries.length === 0) {
-      _drawEmpty();
+    if (!entries.length) {
+      drawEmpty();
       return;
     }
 
-    // Build candle data
-    const candles = _buildCandles(entries);
-    const totalWidth = entries.length * (CANDLE_WIDTH + CANDLE_GAP) + CHART_PADDING.left + CHART_PADDING.right;
-    canvas.width = Math.max(totalWidth, canvas.parentElement.clientWidth || 600);
-    canvas.height = CHART_HEIGHT;
+    const candles = buildCandles(entries);
+    const metrics = getMetrics(entries.length);
 
-    _draw(candles);
+    setCanvasSize(metrics.width, metrics.height);
+    draw(candles, metrics);
   }
 
-  // ── Private: build OHLC from entries ──────────────────────────────────────
+  function getMetrics(entryCount) {
+    const parentWidth = canvas.parentElement?.clientWidth || window.innerWidth || 600;
+    const viewportWidth = Math.min(window.innerWidth || parentWidth, parentWidth);
 
-  function _buildCandles(entries) {
+    const mobile = viewportWidth <= 430;
+    const compact = viewportWidth <= 375;
+
+    const candleWidth = compact ? 20 : mobile ? 22 : 28;
+    const candleGap = compact ? 12 : mobile ? 14 : 18;
+
+    const padding = {
+      top: mobile ? 20 : 30,
+      right: mobile ? 12 : 20,
+      bottom: mobile ? 56 : 64,
+      left: mobile ? 46 : 60,
+    };
+
+    const bodyWidth = entryCount * (candleWidth + candleGap) + candleGap;
+    const width = Math.max(parentWidth, bodyWidth + padding.left + padding.right);
+    const height = Math.max(
+      MIN_CHART_HEIGHT,
+      mobile ? BASE_CHART_HEIGHT - 20 : BASE_CHART_HEIGHT
+    );
+
+    return {
+      width,
+      height,
+      candleWidth,
+      candleGap,
+      wickWidth: mobile ? 2 : 2,
+      padding,
+      dateFont: mobile ? '10px "JetBrains Mono", monospace' : '11px "JetBrains Mono", monospace',
+      axisFont: mobile ? '10px "JetBrains Mono", monospace' : '11px "JetBrains Mono", monospace',
+      labelOffsetY: mobile ? 15 : 18,
+    };
+  }
+
+  function setCanvasSize(cssWidth, cssHeight) {
+    const dpr = Math.max(window.devicePixelRatio || 1, 1);
+
+    canvas.style.width = `${cssWidth}px`;
+    canvas.style.height = `${cssHeight}px`;
+
+    canvas.width = Math.round(cssWidth * dpr);
+    canvas.height = Math.round(cssHeight * dpr);
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function buildCandles(sortedEntries) {
     let currentValue = 100;
-    return entries.map((entry) => {
+
+    return sortedEntries.map((entry) => {
       const open = currentValue;
       const delta = entry.type === 'green' ? entry.score : -entry.score;
       const close = open + delta;
       const wickExt = entry.score * 0.3;
       const high = Math.max(open, close) + wickExt;
       const low = Math.min(open, close) - wickExt;
+
       currentValue = close;
+
       return { open, high, low, close, entry };
     });
   }
 
-  // ── Private: draw ──────────────────────────────────────────────────────────
+  function draw(candles, metrics) {
+    const { width, height, padding, candleWidth, candleGap, wickWidth, dateFont, axisFont, labelOffsetY } = metrics;
 
-  function _draw(candles) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, width, height);
     candleRects = [];
 
-    const allValues = candles.flatMap((c) => [c.high, c.low]);
+    const allValues = candles.flatMap((candle) => [candle.high, candle.low]);
     const minVal = Math.min(...allValues);
     const maxVal = Math.max(...allValues);
-    const valueRange = maxVal - minVal || 10;
+    const valueRange = Math.max(maxVal - minVal, 10);
 
-    const chartH = CHART_HEIGHT - CHART_PADDING.top - CHART_PADDING.bottom;
-    const chartW = canvas.width - CHART_PADDING.left - CHART_PADDING.right;
+    const chartHeight = height - padding.top - padding.bottom;
 
-    const toY = (v) =>
-      CHART_PADDING.top + chartH - ((v - minVal) / valueRange) * chartH;
+    const toY = (value) => {
+      return padding.top + chartHeight - ((value - minVal) / valueRange) * chartHeight;
+    };
 
-    // ── Background grid ────────────────────────────────────────────────────
-    _drawGrid(minVal, maxVal, chartH, toY);
+    drawGrid(minVal, maxVal, toY, metrics);
 
-    // ── Candles ────────────────────────────────────────────────────────────
-    candles.forEach((candle, i) => {
-      const x = CHART_PADDING.left + i * (CANDLE_WIDTH + CANDLE_GAP) + CANDLE_GAP / 2;
+    candles.forEach((candle, index) => {
+      const x = padding.left + index * (candleWidth + candleGap) + candleGap / 2;
       const isGreen = candle.entry.type === 'green';
-      const color = isGreen ? _cssVar('--candle-green') : _cssVar('--candle-red');
-      const shadowColor = isGreen ? _cssVar('--candle-green-shadow') : _cssVar('--candle-red-shadow');
+
+      const candleColor = isGreen ? cssVar('--candle-green') : cssVar('--candle-red');
+      const shadowColor = isGreen ? cssVar('--candle-green-shadow') : cssVar('--candle-red-shadow');
 
       const openY = toY(candle.open);
       const closeY = toY(candle.close);
@@ -106,144 +141,155 @@ const CandleChart = (() => {
       const lowY = toY(candle.low);
 
       const bodyTop = Math.min(openY, closeY);
-      const bodyH = Math.max(Math.abs(closeY - openY), 2);
+      const bodyHeight = Math.max(Math.abs(closeY - openY), 2);
 
-      // Glow shadow
       ctx.shadowColor = shadowColor;
       ctx.shadowBlur = 6;
 
-      // Wick
       ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = WICK_WIDTH;
-      ctx.moveTo(x + CANDLE_WIDTH / 2, highY);
-      ctx.lineTo(x + CANDLE_WIDTH / 2, lowY);
+      ctx.strokeStyle = candleColor;
+      ctx.lineWidth = wickWidth;
+      ctx.moveTo(x + candleWidth / 2, highY);
+      ctx.lineTo(x + candleWidth / 2, lowY);
       ctx.stroke();
 
-      // Body
-      ctx.fillStyle = color;
-      ctx.fillRect(x, bodyTop, CANDLE_WIDTH, bodyH);
+      ctx.fillStyle = candleColor;
+      ctx.fillRect(x, bodyTop, candleWidth, bodyHeight);
 
       ctx.shadowBlur = 0;
 
-      // Date label
-      const dateStr = _formatDate(candle.entry.date);
+      const dateStr = formatDate(candle.entry.date);
       ctx.save();
-      ctx.fillStyle = _cssVar('--text-muted');
-      ctx.font = DATE_FONT;
+      ctx.fillStyle = cssVar('--text-muted');
+      ctx.font = dateFont;
       ctx.textAlign = 'center';
-      ctx.translate(x + CANDLE_WIDTH / 2, CHART_HEIGHT - CHART_PADDING.bottom + 18);
+      ctx.translate(x + candleWidth / 2, height - padding.bottom + labelOffsetY);
       ctx.rotate(Math.PI / 4);
       ctx.fillText(dateStr, 0, 0);
       ctx.restore();
 
-      // Store hit rect
-      candleRects.push({ x, y: bodyTop, w: CANDLE_WIDTH, h: bodyH, wickTop: highY, wickBottom: lowY, candle });
+      candleRects.push({
+        x,
+        y: bodyTop,
+        w: candleWidth,
+        h: bodyHeight,
+        wickTop: highY,
+        wickBottom: lowY,
+        candle,
+      });
     });
 
-    // Y-axis labels
-    _drawYAxis(minVal, maxVal, toY);
+    drawYAxis(minVal, maxVal, toY, metrics);
   }
 
-  function _drawGrid(minVal, maxVal, chartH, toY) {
+  function drawGrid(minVal, maxVal, toY, metrics) {
+    const { width, padding } = metrics;
     const steps = 5;
+
     ctx.save();
-    ctx.strokeStyle = _cssVar('--grid-color');
+    ctx.strokeStyle = cssVar('--grid-color');
     ctx.lineWidth = 0.5;
     ctx.setLineDash([4, 4]);
-    for (let i = 0; i <= steps; i++) {
-      const v = minVal + (i / steps) * (maxVal - minVal);
-      const y = toY(v);
+
+    for (let i = 0; i <= steps; i += 1) {
+      const value = minVal + (i / steps) * (maxVal - minVal);
+      const y = toY(value);
+
       ctx.beginPath();
-      ctx.moveTo(CHART_PADDING.left, y);
-      ctx.lineTo(canvas.width - CHART_PADDING.right, y);
+      ctx.moveTo(padding.left, y);
+      ctx.lineTo(width - padding.right, y);
       ctx.stroke();
     }
+
     ctx.setLineDash([]);
     ctx.restore();
   }
 
-  function _drawYAxis(minVal, maxVal, toY) {
+  function drawYAxis(minVal, maxVal, toY, metrics) {
+    const { padding, axisFont } = metrics;
     const steps = 5;
+
     ctx.save();
-    ctx.fillStyle = _cssVar('--text-muted');
-    ctx.font = AXIS_FONT;
+    ctx.fillStyle = cssVar('--text-muted');
+    ctx.font = axisFont;
     ctx.textAlign = 'right';
-    for (let i = 0; i <= steps; i++) {
-      const v = minVal + (i / steps) * (maxVal - minVal);
-      const y = toY(v);
-      ctx.fillText(v.toFixed(1), CHART_PADDING.left - 8, y + 4);
+
+    for (let i = 0; i <= steps; i += 1) {
+      const value = minVal + (i / steps) * (maxVal - minVal);
+      const y = toY(value);
+      ctx.fillText(value.toFixed(1), padding.left - 8, y + 3);
     }
+
     ctx.restore();
   }
 
-  function _drawEmpty() {
-    canvas.width = canvas.parentElement.clientWidth || 600;
-    canvas.height = CHART_HEIGHT;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = _cssVar('--text-muted');
+  function drawEmpty() {
+    const parentWidth = canvas.parentElement?.clientWidth || window.innerWidth || 600;
+    const width = parentWidth;
+    const height = Math.max(MIN_CHART_HEIGHT, BASE_CHART_HEIGHT - 20);
+
+    setCanvasSize(width, height);
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = cssVar('--text-muted');
     ctx.font = '14px "JetBrains Mono", monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('No entries yet. Add your first day candle.', canvas.width / 2, CHART_HEIGHT / 2);
+    ctx.fillText('No entries yet. Add your first day candle.', width / 2, height / 2);
   }
 
-  // ── Event handlers ─────────────────────────────────────────────────────────
-
-  function _handleClick(e) {
+  function pointerToCanvasCoords(event) {
     const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    // Scale for device pixel ratio
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const cx = mx * scaleX;
-    const cy = my * scaleY;
+    const scaleX = rect.width ? canvas.width / rect.width : 1;
+    const scaleY = rect.height ? canvas.height / rect.height : 1;
 
-    for (const r of candleRects) {
-      // Hit test: body + wick area
-      if (cx >= r.x && cx <= r.x + r.w && cy >= r.wickTop && cy <= r.wickBottom) {
-        if (clickCallback) clickCallback(r.candle.entry);
-        return;
+    return {
+      x: (event.clientX - rect.left) * scaleX / (window.devicePixelRatio || 1),
+      y: (event.clientY - rect.top) * scaleY / (window.devicePixelRatio || 1),
+    };
+  }
+
+  function findHoveredCandle(x, y) {
+    for (let i = 0; i < candleRects.length; i += 1) {
+      const rect = candleRects[i];
+      if (x >= rect.x && x <= rect.x + rect.w && y >= rect.wickTop && y <= rect.wickBottom) {
+        return i;
       }
     }
+    return -1;
   }
 
-  let hoveredIdx = -1;
-  function _handleHover(e) {
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+  function handleClick(event) {
+    const coords = pointerToCanvasCoords(event);
+    const idx = findHoveredCandle(coords.x, coords.y);
 
-    let found = -1;
-    for (let i = 0; i < candleRects.length; i++) {
-      const r = candleRects[i];
-      if (mx >= r.x && mx <= r.x + r.w && my >= r.wickTop && my <= r.wickBottom) {
-        found = i;
-        break;
-      }
-    }
-
-    if (found !== hoveredIdx) {
-      hoveredIdx = found;
-      canvas.style.cursor = found >= 0 ? 'pointer' : 'default';
+    if (idx >= 0 && clickCallback) {
+      clickCallback(candleRects[idx].candle.entry);
     }
   }
 
-  function _handleLeave() {
+  function handleHover(event) {
+    const coords = pointerToCanvasCoords(event);
+    const idx = findHoveredCandle(coords.x, coords.y);
+
+    if (idx !== hoveredIdx) {
+      hoveredIdx = idx;
+      canvas.style.cursor = idx >= 0 ? 'pointer' : 'default';
+    }
+  }
+
+  function handleLeave() {
     hoveredIdx = -1;
     canvas.style.cursor = 'default';
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  function _cssVar(name) {
+  function cssVar(name) {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888';
   }
 
-  function _formatDate(dateStr) {
-    const d = new Date(dateStr);
-    const month = (d.getUTCMonth() + 1).toString().padStart(2, '0');
-    const day = d.getUTCDate().toString().padStart(2, '0');
+  function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
     return `${month}/${day}`;
   }
 

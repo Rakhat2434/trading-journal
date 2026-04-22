@@ -9,26 +9,37 @@
   <link rel="stylesheet" href="css/styles.css" />
   <style>
     .nav-username {
-      max-width: 160px;
-      padding: 6px 10px;
+      max-width: min(42vw, 180px);
+      min-height: 44px;
+      padding: 0.5rem 0.65rem;
       border: 1px solid var(--border-color);
-      border-radius: 6px;
+      border-radius: 0.5rem;
       background: var(--bg-input);
       color: var(--text-secondary);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      line-height: 1;
+      font-size: clamp(11px, 2.6vw, 12px);
+      line-height: 1.1;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      display: inline-flex;
+      align-items: center;
     }
     .nav-logout-btn {
-      padding: 6px 10px;
-      font-size: 11px;
-      line-height: 1;
+      min-height: 44px;
+      padding: 0.5rem 0.7rem;
+      font-size: clamp(11px, 2.6vw, 12px);
+      line-height: 1.1;
     }
-    @media (max-width: 600px) {
-      .nav-username { max-width: 100px; }
+    @media (max-width: 425px) {
+      .nav-username {
+        max-width: 100%;
+        flex: 1 1 100%;
+        order: 4;
+      }
+      .nav-logout-btn {
+        order: 5;
+      }
     }
   </style>
 </head>
@@ -92,7 +103,7 @@
           <form id="entry-form" autocomplete="off">
             <div class="form-group">
               <label for="entry-date">Date</label>
-              <div style="display:flex;gap:8px;align-items:center;">
+              <div class="date-input-row">
                 <input type="date" id="entry-date" class="form-control" required />
                 <button type="button" id="today-btn">TODAY</button>
               </div>
