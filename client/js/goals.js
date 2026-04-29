@@ -1,16 +1,18 @@
 let tasks = [];
 let achievements = [];
 let editingTaskId = null;
-let weekAnchorDate = startOfWeek(new Date());
+let plannerView = 'week';
+let anchorDate = startOfLocalDay(new Date());
 let lastFocusedElement = null;
 let createdTaskIds = new Set();
 
 const MOTION_MS = 240;
+const VALID_VIEWS = ['week', 'month'];
 
 const taskForm = document.getElementById('task-form');
 const taskModal = document.getElementById('task-modal');
 const taskFormTitle = document.getElementById('task-form-title');
-const taskDaySelect = document.getElementById('task-day');
+const taskDayInput = document.getElementById('task-day');
 const taskTimeInput = document.getElementById('task-time');
 const taskTextInput = document.getElementById('task-text');
 const taskSubmitBtn = document.getElementById('task-submit-btn');
@@ -32,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   ThemeManager.init();
   Auth.renderNavbarUser();
   bindEvents();
-  renderDayOptions();
+  syncViewButtons();
   await loadPlanner();
 });
 
@@ -42,11 +44,9 @@ async function loadPlanner() {
   closeTaskMenus();
 
   try {
-    const weekDatesList = weekDates(weekAnchorDate);
-    const from = dateKey(weekDatesList[0]);
-    const to = dateKey(weekDatesList[6]);
+    const range = visibleRange();
     const [tasksRes, achievementsRes] = await Promise.all([
-      TasksAPI.getAll({ from, to }),
+      TasksAPI.getAll({ from: dateKey(range.start), to: dateKey(range.end) }),
       AchievementsAPI.getAll(),
     ]);
 
@@ -64,12 +64,15 @@ async function loadPlanner() {
 
 function bindEvents() {
   document.getElementById('open-task-modal-btn').addEventListener('click', () => openTaskModalForCreate());
-  document.getElementById('prev-week-btn').addEventListener('click', () => moveWeek(-1));
-  document.getElementById('next-week-btn').addEventListener('click', () => moveWeek(1));
+  document.getElementById('prev-week-btn').addEventListener('click', () => movePeriod(-1));
+  document.getElementById('next-week-btn').addEventListener('click', () => movePeriod(1));
   document.getElementById('today-week-btn').addEventListener('click', () => {
-    weekAnchorDate = startOfWeek(new Date());
-    renderDayOptions();
+    anchorDate = startOfLocalDay(new Date());
     loadPlanner();
+  });
+
+  document.querySelectorAll('[data-planner-view]').forEach((btn) => {
+    btn.addEventListener('click', () => setPlannerView(btn.dataset.plannerView));
   });
 
   document.querySelectorAll('[data-close-task-modal]').forEach((btn) => {
@@ -78,7 +81,7 @@ function bindEvents() {
 
   taskForm.addEventListener('submit', handleTaskSubmit);
   taskCancelBtn.addEventListener('click', closeTaskModal);
-  taskDaySelect.addEventListener('change', () => clearFieldError('task-day'));
+  taskDayInput.addEventListener('input', () => clearFieldError('task-day'));
   taskTimeInput.addEventListener('input', () => clearFieldError('task-time'));
   taskTextInput.addEventListener('input', () => clearFieldError('task-text'));
 
@@ -98,36 +101,38 @@ function bindEvents() {
   });
 
   document.addEventListener('i18n:changed', () => {
-    renderDayOptions();
     renderPlanner();
     updateModalText();
   });
 }
 
 function renderPlanner() {
-  const dates = weekDates(weekAnchorDate);
+  const range = visibleRange();
   const completedCount = tasks.filter((task) => task.status === 'completed').length;
   const totalCount = tasks.length;
 
-  weekRangeLabel.textContent = `${formatDate(dates[0])} - ${formatDate(dates[6])}`;
-  weekProgressLabel.textContent = tPlanner('planner.weekProgress', { done: completedCount, total: totalCount });
+  weekPlanner.className = `week-planner is-${plannerView}-view`;
+  weekRangeLabel.textContent = plannerView === 'month'
+    ? monthLabel(anchorDate)
+    : `${formatDate(range.start)} - ${formatDate(range.end)}`;
+  weekProgressLabel.textContent = tPlanner('planner.periodProgress', { done: completedCount, total: totalCount });
 
-  weekPlanner.innerHTML = dates.map((date, index) => dayColumn(date, index)).join('');
+  weekPlanner.innerHTML = range.dates.map((date, index) => (
+    plannerView === 'month' ? monthDayColumn(date, index) : weekDayColumn(date, index)
+  )).join('');
 
   setTimeout(() => {
     createdTaskIds.clear();
   }, MOTION_MS + 140);
 }
 
-function dayColumn(date, index) {
+function weekDayColumn(date, index) {
   const key = dateKey(date);
-  const dayTasks = tasks
-    .filter((task) => taskDateKey(task) === key)
-    .sort(compareTaskTime);
+  const dayTasks = tasksForDate(key);
   const isToday = key === dateKey(new Date());
 
   return `
-    <section class="planner-day ${isToday ? 'is-today' : ''}" style="--item-index:${index};">
+    <section class="planner-day ${isToday ? 'is-today' : ''}" data-date="${key}" style="--item-index:${index};">
       <header class="planner-day-header">
         <div>
           <span class="planner-weekday">${escHtml(weekdayLabel(date))}</span>
@@ -136,19 +141,47 @@ function dayColumn(date, index) {
         <span class="planner-day-count">${dayTasks.length}</span>
       </header>
       <div class="planner-task-list">
-        ${dayTasks.length ? dayTasks.map((task, taskIndex) => taskCard(task, taskIndex)).join('') : emptyDay()}
+        ${dayTasks.length ? dayTasks.map((task, taskIndex) => taskCard(task, taskIndex)).join('') : emptyDay(key)}
       </div>
     </section>`;
 }
 
-function taskCard(task, index = 0) {
-  const isDone = task.status === 'completed';
-  const newClass = createdTaskIds.has(task._id) ? ' is-new' : '';
+function monthDayColumn(date, index) {
+  const key = dateKey(date);
+  const dayTasks = tasksForDate(key);
+  const isToday = key === dateKey(new Date());
+  const isMuted = date.getMonth() !== anchorDate.getMonth();
 
   return `
-    <article class="planner-task ${isDone ? 'is-done' : ''}${newClass}" data-task-id="${task._id}" style="--item-index:${index};">
+    <section class="planner-day planner-month-day ${isToday ? 'is-today' : ''} ${isMuted ? 'is-muted' : ''}" data-date="${key}" style="--item-index:${index};">
+      <header class="planner-day-header">
+        <div>
+          <span class="planner-weekday">${escHtml(weekdayLabel(date))}</span>
+          <strong class="planner-date">${escHtml(formatDate(date, { dayOnly: true }))}</strong>
+        </div>
+        <span class="planner-day-count">${dayTasks.length}</span>
+      </header>
+      <div class="planner-task-list">
+        ${dayTasks.length ? dayTasks.map((task, taskIndex) => taskCard(task, taskIndex, { compact: true })).join('') : emptyDay(key)}
+      </div>
+    </section>`;
+}
+
+function tasksForDate(key) {
+  return tasks
+    .filter((task) => taskDateKey(task) === key)
+    .sort(compareTaskTime);
+}
+
+function taskCard(task, index = 0, options = {}) {
+  const isDone = task.status === 'completed';
+  const newClass = createdTaskIds.has(task._id) ? ' is-new' : '';
+  const compactClass = options.compact ? ' is-compact' : '';
+
+  return `
+    <article class="planner-task ${isDone ? 'is-done' : ''}${newClass}${compactClass}" data-task-id="${task._id}" style="--item-index:${index};">
       <button class="task-done-toggle" type="button" data-task-toggle="${task._id}" aria-label="${isDone ? tPlanner('planner.markNotDone') : tPlanner('planner.markDone')}" aria-pressed="${isDone ? 'true' : 'false'}">
-        <span aria-hidden="true">${isDone ? '✓' : ''}</span>
+        <span aria-hidden="true">${isDone ? '&#10003;' : ''}</span>
       </button>
       <div class="planner-task-content">
         <time class="planner-task-time">${escHtml(task.startTime || tPlanner('common.anyTime'))}</time>
@@ -164,27 +197,12 @@ function taskCard(task, index = 0) {
     </article>`;
 }
 
-function emptyDay() {
+function emptyDay(dateValue) {
   return `
-    <div class="planner-empty-day">
+    <button class="planner-empty-day" type="button" data-open-date="${dateValue}">
       <span></span>
       <p>${tPlanner('planner.emptyDay')}</p>
-    </div>`;
-}
-
-function renderDayOptions(selectedValue = taskDaySelect.value) {
-  const options = weekDates(weekAnchorDate).map((date) => {
-    const value = dateKey(date);
-    const label = `${weekdayLabel(date)} - ${formatDate(date, { monthDay: true })}`;
-    return `<option value="${value}">${escHtml(label)}</option>`;
-  }).join('');
-
-  taskDaySelect.innerHTML = options;
-  if ([...taskDaySelect.options].some((option) => option.value === selectedValue)) {
-    taskDaySelect.value = selectedValue;
-  } else {
-    taskDaySelect.value = dateKey(new Date());
-  }
+    </button>`;
 }
 
 async function handleTaskSubmit(event) {
@@ -194,7 +212,7 @@ async function handleTaskSubmit(event) {
   const wasEditing = Boolean(editingTaskId);
   const data = {
     title: taskTextInput.value.trim(),
-    date: taskDaySelect.value,
+    date: taskDayInput.value,
     startTime: taskTimeInput.value,
     endTime: '',
     description: '',
@@ -209,6 +227,8 @@ async function handleTaskSubmit(event) {
     const response = wasEditing
       ? await TasksAPI.update(editingTaskId, data)
       : await TasksAPI.create(data);
+
+    anchorDate = startOfLocalDay(data.date);
 
     if (!wasEditing && response.data && response.data._id) {
       createdTaskIds.add(response.data._id);
@@ -227,6 +247,12 @@ async function handleTaskSubmit(event) {
 }
 
 function handlePlannerClick(event) {
+  const emptyDate = event.target.closest('[data-open-date]');
+  if (emptyDate) {
+    openTaskModalForCreate(emptyDate.dataset.openDate);
+    return;
+  }
+
   const toggle = event.target.closest('[data-task-toggle]');
   if (toggle) {
     event.stopPropagation();
@@ -287,11 +313,10 @@ async function toggleTaskDone(id) {
   }
 }
 
-function openTaskModalForCreate(defaultDate = dateKey(new Date())) {
+function openTaskModalForCreate(defaultDate = dateKey(anchorDate)) {
   resetTaskForm();
-  const weekValues = weekDates(weekAnchorDate).map(dateKey);
-  taskDaySelect.value = weekValues.includes(defaultDate) ? defaultDate : weekValues[0];
-  openModal(taskModal, taskDaySelect);
+  taskDayInput.value = defaultDate;
+  openModal(taskModal, taskDayInput);
 }
 
 function startEditTask(id) {
@@ -299,12 +324,12 @@ function startEditTask(id) {
   if (!task) return;
 
   editingTaskId = id;
-  taskDaySelect.value = taskDateKey(task);
+  taskDayInput.value = taskDateKey(task);
   taskTimeInput.value = task.startTime || '';
   taskTextInput.value = task.title || '';
   clearTaskErrors();
   updateModalText();
-  openModal(taskModal, taskDaySelect);
+  openModal(taskModal, taskDayInput);
 }
 
 function closeTaskModal() {
@@ -314,7 +339,7 @@ function closeTaskModal() {
 function resetTaskForm() {
   editingTaskId = null;
   taskForm.reset();
-  renderDayOptions();
+  taskDayInput.value = dateKey(anchorDate);
   taskTimeInput.value = '';
   taskTextInput.value = '';
   taskSubmitBtn.disabled = false;
@@ -365,7 +390,7 @@ function validateTaskForm() {
   clearTaskErrors();
   let valid = true;
 
-  if (!taskDaySelect.value) {
+  if (!taskDayInput.value) {
     setFieldError('task-day', tPlanner('planner.validation.day'));
     valid = false;
   }
@@ -428,11 +453,39 @@ function closeTaskMenus() {
   });
 }
 
-function moveWeek(direction) {
-  weekAnchorDate.setDate(weekAnchorDate.getDate() + direction * 7);
-  weekAnchorDate = startOfWeek(weekAnchorDate);
-  renderDayOptions();
+function setPlannerView(view) {
+  if (!VALID_VIEWS.includes(view) || plannerView === view) return;
+  plannerView = view;
+  syncViewButtons();
   loadPlanner();
+}
+
+function syncViewButtons() {
+  document.querySelectorAll('[data-planner-view]').forEach((btn) => {
+    const active = btn.dataset.plannerView === plannerView;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+}
+
+function movePeriod(direction) {
+  if (plannerView === 'month') {
+    anchorDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + direction, 1);
+  } else {
+    anchorDate.setDate(anchorDate.getDate() + direction * 7);
+    anchorDate = startOfWeek(anchorDate);
+  }
+
+  loadPlanner();
+}
+
+function visibleRange() {
+  const dates = plannerView === 'month' ? calendarDates(anchorDate) : weekDates(anchorDate);
+  return {
+    dates,
+    start: dates[0],
+    end: dates[dates.length - 1],
+  };
 }
 
 function openModal(modal, focusEl) {
@@ -505,9 +558,19 @@ function compareTaskTime(a, b) {
   return String(a.startTime || '99:99').localeCompare(String(b.startTime || '99:99'));
 }
 
-function weekDates(anchor) {
-  const start = startOfWeek(anchor);
+function weekDates(dateInput) {
+  const start = startOfWeek(dateInput);
   return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    return date;
+  });
+}
+
+function calendarDates(dateInput) {
+  const first = new Date(dateInput.getFullYear(), dateInput.getMonth(), 1);
+  const start = startOfWeek(first);
+  return Array.from({ length: 42 }, (_, index) => {
     const date = new Date(start);
     date.setDate(start.getDate() + index);
     return date;
@@ -523,17 +586,26 @@ function startOfWeek(dateInput) {
 }
 
 function startOfLocalDay(dateInput) {
-  const date = new Date(dateInput);
+  const date = parseLocalDate(dateInput);
   date.setHours(0, 0, 0, 0);
   return date;
 }
 
 function dateKey(dateInput) {
-  const date = new Date(dateInput);
+  const date = parseLocalDate(dateInput);
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function parseLocalDate(dateInput) {
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateInput)) {
+    const [year, month, day] = dateInput.slice(0, 10).split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  return new Date(dateInput);
 }
 
 function taskDateKey(task) {
@@ -546,6 +618,10 @@ function formatDate(dateInput, options = {}) {
 
 function weekdayLabel(dateInput) {
   return window.I18n ? I18n.formatDate(dateInput, { weekdayOnly: true, short: true }) : new Date(dateInput).toLocaleDateString('en-US', { weekday: 'short' });
+}
+
+function monthLabel(dateInput) {
+  return window.I18n ? I18n.formatDate(dateInput, { monthYear: true }) : dateKey(dateInput).slice(0, 7);
 }
 
 function translateMessage(message) {

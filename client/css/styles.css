@@ -3844,6 +3844,41 @@ body.modal-open {
   gap: 0.65rem;
 }
 
+.planner-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid var(--planner-border);
+  border-radius: 0.75rem;
+  background: var(--bg-surface);
+  padding: 0.3rem;
+}
+
+.planner-view-btn {
+  min-height: 40px;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.45rem 0.75rem;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.planner-view-btn:hover,
+.planner-view-btn:focus-visible {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.planner-view-btn.active {
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
 .week-controls {
   display: inline-flex;
   align-items: center;
@@ -3892,6 +3927,11 @@ body.modal-open {
   animation: plannerPageIn 0.28s ease both;
 }
 
+.week-planner.is-month-view {
+  grid-template-columns: repeat(7, minmax(118px, 1fr));
+  gap: 0.65rem;
+}
+
 .planner-day {
   position: relative;
   min-height: clamp(420px, 64vh, 720px);
@@ -3908,6 +3948,37 @@ body.modal-open {
 .planner-day.is-today {
   border-color: color-mix(in srgb, var(--accent) 56%, var(--planner-border));
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent-glow) 52%, var(--planner-card)), var(--planner-card));
+}
+
+.week-planner.is-month-view .planner-day {
+  min-height: 162px;
+  border-radius: 0.85rem;
+  padding: 0.55rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.week-planner.is-month-view .planner-day.is-muted {
+  opacity: 0.58;
+}
+
+.week-planner.is-month-view .planner-day-header {
+  padding-bottom: 0.45rem;
+}
+
+.week-planner.is-month-view .planner-weekday {
+  font-size: 0.72rem;
+}
+
+.week-planner.is-month-view .planner-date {
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+}
+
+.week-planner.is-month-view .planner-day-count {
+  min-width: 24px;
+  min-height: 24px;
+  font-size: 0.68rem;
 }
 
 .planner-day-header {
@@ -4067,6 +4138,33 @@ body.modal-open {
   text-decoration: line-through;
 }
 
+.planner-task.is-compact {
+  grid-template-columns: 26px minmax(0, 1fr) 26px;
+  gap: 0.42rem;
+  border-radius: 0.65rem;
+  padding: 0.45rem;
+}
+
+.planner-task.is-compact .task-done-toggle,
+.planner-task.is-compact .task-menu-toggle {
+  width: 26px;
+  height: 26px;
+}
+
+.planner-task.is-compact .planner-task-time {
+  margin-bottom: 0.08rem;
+  font-size: 0.68rem;
+}
+
+.planner-task.is-compact .planner-task-content p {
+  display: -webkit-box;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .simple-task-menu {
   position: relative;
   display: flex;
@@ -4140,12 +4238,28 @@ body.modal-open {
 .planner-empty-day {
   display: grid;
   place-items: center;
+  width: 100%;
   min-height: 90px;
   border: 1px dashed var(--planner-border);
   border-radius: 0.75rem;
+  background: transparent;
   color: var(--text-muted);
+  cursor: pointer;
   text-align: center;
   padding: 0.8rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.planner-empty-day:hover,
+.planner-empty-day:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--planner-border));
+  background: var(--accent-glow);
+  color: var(--text-secondary);
+}
+
+.week-planner.is-month-view .planner-empty-day {
+  min-height: 52px;
+  padding: 0.45rem;
 }
 
 .planner-empty-day span {
@@ -4335,8 +4449,13 @@ body.modal-open {
 }
 
 @media (max-width: 980px) {
-  .week-planner {
+  .week-planner.is-week-view {
     grid-template-columns: 1fr;
+  }
+
+  .week-planner.is-month-view {
+    grid-template-columns: repeat(7, minmax(86px, 1fr));
+    gap: 0.45rem;
   }
 
   .planner-day {
@@ -4356,14 +4475,32 @@ body.modal-open {
   }
 
   .planner-toolbar,
+  .planner-view-toggle,
   .week-controls,
   .planner-add-btn,
   .profile-hero .btn {
     width: 100%;
   }
 
+  .planner-view-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
   .week-controls {
     justify-content: space-between;
+  }
+
+  .week-planner.is-month-view {
+    grid-template-columns: 1fr;
+  }
+
+  .week-planner.is-month-view .planner-day.is-muted {
+    display: none;
+  }
+
+  .week-planner.is-month-view .planner-day {
+    min-height: auto;
   }
 
   .planner-add-btn,

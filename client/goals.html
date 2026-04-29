@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title data-i18n="planner.pageTitle">Trading Journal - Weekly Planner</title>
-  <meta name="description" content="A simple weekly planner for tasks by day and time." data-i18n-content="planner.metaDescription" />
+  <title data-i18n="planner.pageTitle">Trading Journal - Planner</title>
+  <meta name="description" content="A simple planner for tasks by day and time." data-i18n-content="planner.metaDescription" />
   <link rel="stylesheet" href="css/themes.css" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
@@ -32,16 +32,20 @@
 <main class="app-container page-content weekly-planner-page">
   <header class="planner-topbar">
     <div class="planner-title-block">
-      <span class="section-eyebrow" data-i18n="planner.kicker">Weekly Planner</span>
+      <span class="section-eyebrow" data-i18n="planner.kicker">Planner</span>
       <h1 data-i18n="planner.title">Plan tasks by day and time</h1>
-      <p data-i18n="planner.subtitle">Write the next task, choose a day, set the time, and mark it done.</p>
+      <p data-i18n="planner.subtitle">Write the next task, choose any date, set the time, and mark it done.</p>
     </div>
 
     <div class="planner-toolbar">
-      <div class="week-controls" aria-label="Week navigation" data-i18n-aria-label="planner.weekNavigation">
-        <button id="prev-week-btn" class="btn-icon planner-nav-btn" type="button" aria-label="Previous week" data-i18n-aria-label="planner.previousWeek">&lt;</button>
+      <div class="planner-view-toggle" aria-label="Planner view" data-i18n-aria-label="planner.viewLabel">
+        <button class="planner-view-btn active" type="button" data-planner-view="week" data-i18n="planner.view.week">Week</button>
+        <button class="planner-view-btn" type="button" data-planner-view="month" data-i18n="planner.view.month">Month</button>
+      </div>
+      <div class="week-controls" aria-label="Period navigation" data-i18n-aria-label="planner.periodNavigation">
+        <button id="prev-week-btn" class="btn-icon planner-nav-btn" type="button" aria-label="Previous period" data-i18n-aria-label="planner.previousPeriod">&lt;</button>
         <button id="today-week-btn" class="btn btn-ghost btn-sm" type="button" data-i18n="action.today">Today</button>
-        <button id="next-week-btn" class="btn-icon planner-nav-btn" type="button" aria-label="Next week" data-i18n-aria-label="planner.nextWeek">&gt;</button>
+        <button id="next-week-btn" class="btn-icon planner-nav-btn" type="button" aria-label="Next period" data-i18n-aria-label="planner.nextPeriod">&gt;</button>
       </div>
       <button id="open-task-modal-btn" class="btn btn-primary planner-add-btn" type="button" data-i18n="action.addTask">+ Add task</button>
     </div>
@@ -59,7 +63,7 @@
 
   <div id="dashboard-error" class="dashboard-error" role="alert" hidden></div>
 
-  <section id="week-planner" class="week-planner" aria-label="Weekly task planner" data-i18n-aria-label="planner.boardLabel"></section>
+  <section id="week-planner" class="week-planner is-week-view" aria-label="Task planner" data-i18n-aria-label="planner.boardLabel"></section>
 </main>
 
 <div id="task-modal" class="dashboard-modal planner-modal" hidden>
@@ -74,7 +78,8 @@
     <form id="task-form" class="drawer-form" autocomplete="off" novalidate>
       <div class="form-group">
         <label for="task-day"><span data-i18n="planner.field.day">Day</span> *</label>
-        <select id="task-day" class="form-control" required></select>
+        <input type="date" id="task-day" class="form-control" required />
+        <p class="field-hint" data-i18n="planner.dateHint">Pick any future week or month.</p>
         <p id="task-day-error" class="field-error" aria-live="polite"></p>
       </div>
 
