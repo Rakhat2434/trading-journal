@@ -1,0 +1,6 @@
+/api/* /api/:splat 404
+/goals /goals.html 200
+/timer /timer.html 200
+/login /login.html 200
+/register /register.html 200
+/* /index.html 200
