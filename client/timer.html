@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title data-i18n="timer.pageTitle">Trading Journal - Focus Timer</title>
+  <meta name="description" content="A clean focus timer for deep work sessions." data-i18n-content="timer.metaDescription" />
+  <link rel="stylesheet" href="css/themes.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="/" class="navbar-brand">
+      <span class="brand-icon">TJ</span>
+      <span class="brand-name">TradingJournal</span>
+      <span class="brand-tag">v1.0</span>
+    </a>
+    <div class="navbar-nav">
+      <a href="/" class="nav-link" data-i18n="nav.journal">Journal</a>
+      <a href="/goals" class="nav-link" data-i18n="nav.goals">Goals</a>
+      <a href="/timer" class="nav-link active" data-i18n="nav.timer">Timer</a>
+      <span id="nav-username" class="nav-username"></span>
+      <button id="logout-btn" class="btn btn-ghost nav-logout-btn" type="button" data-i18n="nav.logout">Logout</button>
+      <button id="theme-btn" type="button">Dark Terminal</button>
+    </div>
+  </div>
+</nav>
+
+<div class="ticker-tape">
+  <span class="ticker-inner">
+    <span data-i18n="timer.ticker">FOCUS TIMER - PROTECT THE NEXT BLOCK - 45 MINUTES OF CLEAN EXECUTION - START SMALL - FINISH STRONG - FOCUS TIMER -</span>
+  </span>
+</div>
+
+<main class="app-container page-content timer-page">
+  <div class="page-header">
+    <h1 data-i18n="timer.title">Focus Timer</h1>
+    <p data-i18n="timer.subtitle">Set a block, remove friction, and finish one meaningful session.</p>
+  </div>
+
+  <section class="timer-shell">
+    <div class="timer-card focus-mode-card">
+      <div class="timer-topline">
+        <span id="timer-status" class="timer-status" data-i18n="status.ready">Ready</span>
+        <span id="timer-duration-label" class="timer-duration-label">45 min</span>
+      </div>
+
+      <div class="timer-circle-wrap" aria-label="Focus timer progress" data-i18n-aria-label="timer.ariaProgress">
+        <svg class="timer-circle" viewBox="0 0 220 220" role="img">
+          <circle class="timer-ring-bg" cx="110" cy="110" r="96"></circle>
+          <circle id="timer-ring" class="timer-ring" cx="110" cy="110" r="96"></circle>
+        </svg>
+        <div class="timer-time-stack">
+          <div id="timer-display" class="timer-display">45:00</div>
+          <div id="timer-motivation" class="timer-motivation" data-i18n="timer.motivation.ready">Choose the next clean action.</div>
+        </div>
+      </div>
+
+      <div class="timer-presets" aria-label="Timer duration" data-i18n-aria-label="timer.ariaDuration">
+        <button class="duration-btn" data-minutes="25" type="button">25</button>
+        <button class="duration-btn active" data-minutes="45" type="button">45</button>
+        <button class="duration-btn" data-minutes="60" type="button">60</button>
+        <label class="custom-duration">
+          <span data-i18n="timer.custom">Custom</span>
+          <input id="custom-minutes" type="number" min="1" max="600" placeholder="min" data-i18n-placeholder="timer.customPlaceholder" />
+        </label>
+      </div>
+
+      <div class="timer-controls">
+        <button id="timer-start" class="btn btn-primary" type="button" data-i18n="action.start">Start</button>
+        <button id="timer-pause" class="btn btn-ghost" type="button" disabled data-i18n="action.pause">Pause</button>
+        <button id="timer-reset" class="btn btn-ghost" type="button" data-i18n="action.reset">Reset</button>
+        <button id="timer-finish" class="btn btn-success" type="button" data-i18n="action.finishSession">Finish Session</button>
+      </div>
+    </div>
+
+    <aside class="timer-side">
+      <div class="panel">
+        <div class="panel-header">
+          <h2 data-i18n="timer.statsTitle">Focus Stats</h2>
+        </div>
+        <div class="panel-body">
+          <div class="timer-stats-grid">
+            <div class="mini-stat">
+              <span class="mini-stat-label" data-i18n="timer.completed">Completed</span>
+              <strong id="focus-completed-count">0</strong>
+            </div>
+            <div class="mini-stat">
+              <span class="mini-stat-label" data-i18n="timer.minutes">Minutes</span>
+              <strong id="focus-minutes-count">0</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2 data-i18n="timer.recentSessions">Recent Sessions</h2>
+        </div>
+        <div class="panel-body">
+          <div id="timer-history-loading" class="loading-state compact">
+            <div class="spinner"></div>
+            <span data-i18n="timer.loadingSessions">Loading sessions...</span>
+          </div>
+          <div id="timer-history" class="timer-history"></div>
+          <div id="timer-history-empty" class="empty-state compact" style="display:none;">
+            <h3 data-i18n="timer.emptyTitle">No sessions yet</h3>
+            <p data-i18n="timer.emptyText">Start a focus block to build your history.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </section>
+</main>
+
+<div id="toast-container" aria-live="polite"></div>
+
+<script src="js/i18n.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/timer.js"></script>
+</body>
+</html>

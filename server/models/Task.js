@@ -1,15 +1,16 @@
 const mongoose = require('mongoose');
 
-/**
- * Goal Schema
- * Represents a user goal with progress tracking
- */
-const goalSchema = new mongoose.Schema(
+const taskSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'User is required'],
+    },
+    goal: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Goal',
+      default: null,
     },
     title: {
       type: String,
@@ -23,23 +24,27 @@ const goalSchema = new mongoose.Schema(
       maxlength: [1000, 'Description cannot exceed 1000 characters'],
       default: '',
     },
-    targetDate: {
+    date: {
       type: Date,
-      default: null,
+      required: [true, 'Date is required'],
+    },
+    startTime: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    endTime: {
+      type: String,
+      trim: true,
+      default: '',
     },
     status: {
       type: String,
       enum: {
-        values: ['active', 'completed', 'failed'],
-        message: 'Status must be active, completed, or failed',
+        values: ['pending', 'completed', 'missed'],
+        message: 'Status must be pending, completed, or missed',
       },
-      default: 'active',
-    },
-    progress: {
-      type: Number,
-      min: [0, 'Progress cannot be less than 0'],
-      max: [100, 'Progress cannot exceed 100'],
-      default: 0,
+      default: 'pending',
     },
     priority: {
       type: String,
@@ -49,10 +54,10 @@ const goalSchema = new mongoose.Schema(
       },
       default: 'medium',
     },
-    category: {
+    color: {
       type: String,
       trim: true,
-      maxlength: [80, 'Category cannot exceed 80 characters'],
+      maxlength: [32, 'Color cannot exceed 32 characters'],
       default: '',
     },
   },
@@ -61,6 +66,8 @@ const goalSchema = new mongoose.Schema(
   }
 );
 
-goalSchema.index({ user: 1, status: 1, targetDate: 1 });
+taskSchema.index({ user: 1, date: 1 });
+taskSchema.index({ user: 1, status: 1, date: 1 });
+taskSchema.index({ user: 1, goal: 1 });
 
-module.exports = mongoose.model('Goal', goalSchema);
+module.exports = mongoose.model('Task', taskSchema);

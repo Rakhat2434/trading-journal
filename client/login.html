@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Trading Journal - Login</title>
+  <title data-i18n="auth.login.pageTitle">Trading Journal - Login</title>
   <link rel="stylesheet" href="css/themes.css" />
   <link rel="stylesheet" href="css/styles.css" />
   <style>
@@ -17,10 +17,15 @@
       padding-bottom: calc(16px + env(safe-area-inset-bottom));
       position: relative;
     }
-    .auth-theme-btn {
+    .auth-top-actions {
       position: absolute;
       top: calc(12px + env(safe-area-inset-top));
       right: 16px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .auth-theme-btn {
       min-height: 42px;
     }
     .auth-container {
@@ -50,31 +55,34 @@
   </style>
 </head>
 <body class="auth-page">
-  <button id="theme-btn" class="auth-theme-btn">Dark Terminal</button>
+  <div class="auth-top-actions">
+    <button id="theme-btn" class="auth-theme-btn">Dark Terminal</button>
+  </div>
 
   <main class="auth-container">
     <section class="auth-card panel">
       <div class="panel-header">
-        <h2>Login</h2>
+        <h2 data-i18n="auth.login.title">Login</h2>
       </div>
       <div class="panel-body">
         <form id="login-form" autocomplete="off">
           <div class="form-group">
-            <label for="login-email">Email</label>
+            <label for="login-email" data-i18n="field.email">Email</label>
             <input id="login-email" type="email" class="form-control" required />
           </div>
           <div class="form-group">
-            <label for="login-password">Password</label>
+            <label for="login-password" data-i18n="field.password">Password</label>
             <input id="login-password" type="password" class="form-control" required />
           </div>
           <p id="auth-message" class="auth-message"></p>
-          <button id="login-submit-btn" type="submit" class="btn btn-primary btn-full">Login</button>
+          <button id="login-submit-btn" type="submit" class="btn btn-primary btn-full" data-i18n="auth.login.title">Login</button>
         </form>
-        <p class="auth-footer">No account? <a href="/register.html">Register</a></p>
+        <p class="auth-footer"><span data-i18n="auth.noAccount">No account?</span> <a href="/register.html" data-i18n="auth.register.title">Register</a></p>
       </div>
     </section>
   </main>
 
+  <script src="js/i18n.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/theme.js"></script>

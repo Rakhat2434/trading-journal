@@ -8,6 +8,7 @@ let chartEntries = [];
 let editingId = null;
 let currentFilter = 'all';
 let currentSort = 'desc';
+let activeCandleEntry = null;
 
 const entryForm = document.getElementById('entry-form');
 const formTitle = document.getElementById('form-title');
@@ -85,6 +86,10 @@ function showToast(message, type = 'info') {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  if (window.I18n && I18n.ready) {
+    await I18n.ready;
+  }
+
   const authorized = await Auth.requireAuth();
   if (!authorized) return;
 
@@ -114,7 +119,7 @@ async function loadEntries() {
     renderSummary(chartEntries);
     CandleChart.render(chartEntries);
   } catch (err) {
-    showToast(err.message, 'error');
+    showToast(translateMessage(err.message), 'error');
   } finally {
     showLoading(false);
   }
@@ -157,9 +162,7 @@ function renderEntries() {
 }
 
 function entryCard(entry) {
-  const dateStr = new Date(entry.date).toLocaleDateString('en-US', {
-    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC',
-  });
+  const dateStr = formatDate(entry.date, { utc: true });
   const tagsHtml = entry.tags && entry.tags.length
     ? `<div class="entry-tags">${entry.tags.map((t) => `<span class="tag">${escHtml(t)}</span>`).join('')}</div>`
     : '';
@@ -172,11 +175,11 @@ function entryCard(entry) {
         <div class="entry-date-row">
           <span class="entry-type-icon">${icon}</span>
           <span class="entry-date">${dateStr}</span>
-          <span class="entry-score-badge score-${entry.score}">Score: ${entry.score}</span>
+          <span class="entry-score-badge score-${entry.score}">${t('journal.score', { score: entry.score })}</span>
         </div>
         <div class="entry-actions">
-          <button class="btn-icon edit-btn" data-id="${entry._id}" title="Edit">Edit</button>
-          <button class="btn-icon delete-btn" data-id="${entry._id}" title="Delete">Delete</button>
+          <button class="btn-icon edit-btn" data-id="${entry._id}" title="${t('action.edit')}">${t('action.edit')}</button>
+          <button class="btn-icon delete-btn" data-id="${entry._id}" title="${t('action.delete')}">${t('action.delete')}</button>
         </div>
       </div>
       <h3 class="entry-title">${escHtml(entry.title)}</h3>
@@ -205,7 +208,7 @@ function bindEvents() {
 
   sortBtn.addEventListener('click', () => {
     currentSort = currentSort === 'desc' ? 'asc' : 'desc';
-    sortBtn.textContent = currentSort === 'desc' ? 'Newest' : 'Oldest';
+    updateSortButton();
     loadEntries();
   });
 
@@ -218,6 +221,10 @@ function bindEvents() {
 
   document.addEventListener('theme:changed', () => {
     CandleChart.render(chartEntries);
+  });
+
+  document.addEventListener('i18n:changed', () => {
+    updateJournalText();
   });
 
   window.addEventListener('resize', () => {
@@ -238,21 +245,21 @@ async function handleSubmit(e) {
   };
 
   if (!data.date || !data.title || !data.note) {
-    showToast('Please fill in all required fields.', 'error');
+    showToast(t('journal.toast.required'), 'error');
     return;
   }
 
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Saving...';
+  submitBtn.textContent = t('action.saving');
 
   try {
     if (editingId) {
       await JournalAPI.update(editingId, data);
-      showToast('Entry updated!', 'success');
+      showToast(t('journal.toast.updated'), 'success');
       cancelEdit();
     } else {
       await JournalAPI.create(data);
-      showToast('Entry created!', 'success');
+      showToast(t('journal.toast.created'), 'success');
       entryForm.reset();
       scoreDisplay.textContent = '5';
       scoreInput.value = '5';
@@ -262,10 +269,10 @@ async function handleSubmit(e) {
 
     await loadEntries();
   } catch (err) {
-    showToast(err.message, 'error');
+    showToast(translateMessage(err.message), 'error');
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = editingId ? 'Update Entry' : 'Add Entry';
+    submitBtn.textContent = editingId ? t('journal.updateEntry') : t('journal.addEntry');
   }
 }
 
@@ -275,8 +282,8 @@ async function startEdit(id) {
     const entry = res.data;
     editingId = id;
 
-    formTitle.textContent = 'Edit Entry';
-    submitBtn.textContent = 'Update Entry';
+    formTitle.textContent = t('journal.form.edit');
+    submitBtn.textContent = t('journal.updateEntry');
     cancelEditBtn.style.display = 'inline-flex';
 
     dateInput.value = toInputDate(entry.date);
@@ -289,14 +296,14 @@ async function startEdit(id) {
 
     document.getElementById('entry-form-section').scrollIntoView({ behavior: 'smooth' });
   } catch (err) {
-    showToast(err.message, 'error');
+    showToast(translateMessage(err.message), 'error');
   }
 }
 
 function cancelEdit() {
   editingId = null;
-  formTitle.textContent = 'New Day Entry';
-  submitBtn.textContent = 'Add Entry';
+  formTitle.textContent = t('journal.form.new');
+  submitBtn.textContent = t('journal.addEntry');
   cancelEditBtn.style.display = 'none';
   entryForm.reset();
   scoreDisplay.textContent = '5';
@@ -306,23 +313,22 @@ function cancelEdit() {
 }
 
 async function confirmDelete(id) {
-  if (!confirm('Delete this entry? This cannot be undone.')) return;
+  if (!confirm(t('journal.confirm.delete'))) return;
 
   try {
     await JournalAPI.delete(id);
-    showToast('Entry deleted.', 'success');
+    showToast(t('journal.toast.deleted'), 'success');
     await loadEntries();
   } catch (err) {
-    showToast(err.message, 'error');
+    showToast(translateMessage(err.message), 'error');
   }
 }
 
 function openCandleModal(entry) {
-  const dateStr = new Date(entry.date).toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
-  });
+  activeCandleEntry = entry;
+  const dateStr = formatDate(entry.date, { utc: true });
   const isGreen = entry.type === 'green';
-  const typeLabel = isGreen ? 'UP Green Day' : 'DOWN Red Day';
+  const typeLabel = isGreen ? t('journal.upDay') : t('journal.downDay');
   const typeClass = isGreen ? 'modal-green' : 'modal-red';
   const tagsHtml = entry.tags && entry.tags.length
     ? `<div class="modal-tags">${entry.tags.map((t) => `<span class="tag">${escHtml(t)}</span>`).join('')}</div>`
@@ -331,7 +337,7 @@ function openCandleModal(entry) {
   document.getElementById('candle-modal-content').innerHTML = `
     <div class="modal-header-row ${typeClass}">
       <span class="modal-type">${typeLabel}</span>
-      <span class="modal-score">Score: ${entry.score}/10</span>
+      <span class="modal-score">${t('journal.scoreOutOf', { score: entry.score })}</span>
     </div>
     <div class="modal-date">${dateStr}</div>
     <h3 class="modal-entry-title">${escHtml(entry.title)}</h3>
@@ -344,6 +350,35 @@ function openCandleModal(entry) {
 }
 
 function closeCandleModal() {
+  activeCandleEntry = null;
   candleModal.classList.remove('open');
   candleOverlay.classList.remove('open');
+}
+
+function updateSortButton() {
+  sortBtn.textContent = currentSort === 'desc' ? t('journal.sort.newest') : t('journal.sort.oldest');
+}
+
+function updateJournalText() {
+  updateSortButton();
+  if (editingId) {
+    formTitle.textContent = t('journal.form.edit');
+    submitBtn.textContent = t('journal.updateEntry');
+  } else {
+    formTitle.textContent = t('journal.form.new');
+    submitBtn.textContent = t('journal.addEntry');
+  }
+  renderEntries();
+  CandleChart.render(chartEntries);
+  if (activeCandleEntry && candleModal.classList.contains('open')) {
+    openCandleModal(activeCandleEntry);
+  }
+}
+
+function formatDate(dateInput, options = {}) {
+  return window.I18n ? I18n.formatDate(dateInput, options) : new Date(dateInput).toLocaleDateString('en-US');
+}
+
+function translateMessage(message) {
+  return window.I18n ? I18n.translateApiMessage(message) : message;
 }

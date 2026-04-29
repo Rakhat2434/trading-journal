@@ -5,9 +5,9 @@
 
 const THEMES = ['trading-dark', 'trading-light', 'pure-white'];
 const THEME_LABELS = {
-  'trading-dark': 'Dark Terminal',
-  'trading-light': 'Trading Light',
-  'pure-white': 'Pure White',
+  'trading-dark': 'theme.trading-dark',
+  'trading-light': 'theme.trading-light',
+  'pure-white': 'theme.pure-white',
 };
 
 const ThemeManager = {
@@ -18,6 +18,7 @@ const ThemeManager = {
     const saved = localStorage.getItem(storageKey) || localStorage.getItem('tj-theme') || 'trading-dark';
     this.apply(saved, { silent: true });
     this._bindButton();
+    this._bindLanguageUpdates();
   },
 
   apply(theme, options = {}) {
@@ -41,7 +42,7 @@ const ThemeManager = {
 
   _updateButton() {
     const btn = document.getElementById('theme-btn');
-    if (btn) btn.textContent = THEME_LABELS[this.current];
+    if (btn) btn.textContent = this._label(this.current);
   },
 
   _bindButton() {
@@ -50,6 +51,17 @@ const ThemeManager = {
 
     btn.dataset.boundTheme = '1';
     btn.addEventListener('click', () => this.cycle());
+  },
+
+  _bindLanguageUpdates() {
+    if (this._languageBound) return;
+    this._languageBound = true;
+    document.addEventListener('i18n:changed', () => this._updateButton());
+  },
+
+  _label(theme) {
+    const key = THEME_LABELS[theme] || THEME_LABELS['trading-dark'];
+    return window.I18n ? I18n.t(key) : key;
   },
 
   _storageKey() {

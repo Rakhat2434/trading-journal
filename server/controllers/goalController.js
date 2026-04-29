@@ -1,18 +1,44 @@
-﻿const Goal = require('../models/Goal');
+const Goal = require('../models/Goal');
+const { checkAchievementsForUser } = require('./achievementController');
+
+const VALID_PRIORITIES = ['low', 'medium', 'high'];
+const VALID_STATUSES = ['active', 'completed', 'failed'];
+
+const cleanGoalPayload = (body) => {
+  const data = {};
+
+  if (body.title !== undefined) data.title = String(body.title).trim();
+  if (body.description !== undefined) data.description = String(body.description).trim();
+  if (body.targetDate !== undefined) data.targetDate = body.targetDate || null;
+  if (body.status !== undefined) data.status = body.status;
+  if (body.progress !== undefined) data.progress = Number(body.progress);
+  if (body.priority !== undefined) data.priority = body.priority;
+  if (body.category !== undefined) data.category = String(body.category).trim();
+
+  return data;
+};
 
 /**
  * GET /api/goals
  */
 const getAllGoals = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, priority, category } = req.query;
     const filter = { user: req.userId };
 
-    if (status && ['active', 'completed', 'failed'].includes(status)) {
+    if (status && VALID_STATUSES.includes(status)) {
       filter.status = status;
     }
 
-    const goals = await Goal.find(filter).sort({ createdAt: -1 });
+    if (priority && VALID_PRIORITIES.includes(priority)) {
+      filter.priority = priority;
+    }
+
+    if (category) {
+      filter.category = category;
+    }
+
+    const goals = await Goal.find(filter).sort({ status: 1, targetDate: 1, createdAt: -1 });
     res.json({ success: true, data: goals, count: goals.length });
   } catch (_error) {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -41,26 +67,35 @@ const getGoalById = async (req, res) => {
  */
 const createGoal = async (req, res) => {
   try {
-    const { title, description, targetDate, status, progress } = req.body;
+    const data = cleanGoalPayload(req.body);
 
-    if (!title || !String(title).trim()) {
+    if (!data.title) {
       return res.status(400).json({ success: false, message: 'Title is required' });
     }
 
-    if (progress !== undefined && (Number(progress) < 0 || Number(progress) > 100)) {
+    if (data.progress !== undefined && (Number(data.progress) < 0 || Number(data.progress) > 100)) {
       return res.status(400).json({ success: false, message: 'Progress must be between 0 and 100' });
     }
 
     const goal = await Goal.create({
       user: req.userId,
-      title: String(title).trim(),
-      description: description ? String(description).trim() : '',
-      targetDate: targetDate || null,
-      status: status || 'active',
-      progress: progress !== undefined ? Number(progress) : 0,
+      title: data.title,
+      description: data.description || '',
+      targetDate: data.targetDate || null,
+      status: data.status || 'active',
+      progress: data.progress !== undefined ? Number(data.progress) : 0,
+      priority: data.priority || 'medium',
+      category: data.category || '',
     });
 
-    res.status(201).json({ success: true, data: goal, message: 'Goal created successfully' });
+    const achievements = goal.status === 'completed' ? await checkAchievementsForUser(req.userId) : [];
+
+    res.status(201).json({
+      success: true,
+      data: goal,
+      achievements,
+      message: 'Goal created successfully',
+    });
   } catch (error) {
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((e) => e.message);
@@ -76,24 +111,19 @@ const createGoal = async (req, res) => {
  */
 const updateGoal = async (req, res) => {
   try {
-    const { progress } = req.body;
+    const updateData = cleanGoalPayload(req.body);
+    const { progress } = updateData;
 
     if (progress !== undefined && (Number(progress) < 0 || Number(progress) > 100)) {
       return res.status(400).json({ success: false, message: 'Progress must be between 0 and 100' });
     }
 
-    const updateData = { ...req.body };
+    if (updateData.title !== undefined && !updateData.title) {
+      return res.status(400).json({ success: false, message: 'Title is required' });
+    }
 
     if (progress !== undefined) {
       updateData.progress = Number(progress);
-    }
-
-    if (updateData.title !== undefined) {
-      updateData.title = String(updateData.title).trim();
-    }
-
-    if (updateData.description !== undefined) {
-      updateData.description = String(updateData.description).trim();
     }
 
     const goal = await Goal.findOneAndUpdate(
@@ -109,7 +139,14 @@ const updateGoal = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Goal not found' });
     }
 
-    res.json({ success: true, data: goal, message: 'Goal updated successfully' });
+    const achievements = goal.status === 'completed' ? await checkAchievementsForUser(req.userId) : [];
+
+    res.json({
+      success: true,
+      data: goal,
+      achievements,
+      message: 'Goal updated successfully',
+    });
   } catch (error) {
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((e) => e.message);

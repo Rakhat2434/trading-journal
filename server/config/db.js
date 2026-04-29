@@ -1,5 +1,9 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
+const Achievement = require('../models/Achievement');
+const FocusSession = require('../models/FocusSession');
+const Goal = require('../models/Goal');
 const JournalEntry = require('../models/JournalEntry');
+const Task = require('../models/Task');
 
 const ensureJournalIndexes = async () => {
   const collection = mongoose.connection.collection('journalentries');
@@ -31,6 +35,17 @@ const ensureJournalIndexes = async () => {
   console.log('JournalEntry indexes synced');
 };
 
+const ensureAppIndexes = async () => {
+  await ensureJournalIndexes();
+  await Promise.all([
+    Goal.syncIndexes(),
+    Task.syncIndexes(),
+    FocusSession.syncIndexes(),
+    Achievement.syncIndexes(),
+  ]);
+  console.log('Goal, Task, FocusSession, and Achievement indexes synced');
+};
+
 /**
  * Connect to MongoDB Atlas
  */
@@ -45,7 +60,7 @@ const connectDB = async () => {
   try {
     const conn = await mongoose.connect(mongoUri);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
-    await ensureJournalIndexes();
+    await ensureAppIndexes();
     return conn;
   } catch (error) {
     console.error(`MongoDB Connection Error: ${error.message}`);

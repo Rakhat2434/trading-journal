@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Trading Journal - Daily Candles</title>
-  <meta name="description" content="Track your life like a trading chart. One candle per day." />
+  <title data-i18n="journal.pageTitle">Trading Journal - Daily Candles</title>
+  <meta name="description" content="Track your life like a trading chart. One candle per day." data-i18n-content="journal.metaDescription" />
   <link rel="stylesheet" href="css/themes.css" />
   <link rel="stylesheet" href="css/styles.css" />
   <style>
@@ -53,42 +53,43 @@
       <span class="brand-tag">v1.0</span>
     </a>
     <div class="navbar-nav">
-      <a href="/" class="nav-link active">Journal</a>
-      <a href="/goals" class="nav-link">Goals</a>
+      <a href="/" class="nav-link active" data-i18n="nav.journal">Journal</a>
+      <a href="/goals" class="nav-link" data-i18n="nav.goals">Goals</a>
+      <a href="/timer" class="nav-link" data-i18n="nav.timer">Timer</a>
       <span id="nav-username" class="nav-username"></span>
-      <button id="logout-btn" class="btn btn-ghost nav-logout-btn" type="button">Logout</button>
-      <button id="theme-btn">Dark Terminal</button>
+      <button id="logout-btn" class="btn btn-ghost nav-logout-btn" type="button" data-i18n="nav.logout">Logout</button>
+      <button id="theme-btn" type="button">Dark Terminal</button>
     </div>
   </div>
 </nav>
 
 <div class="ticker-tape">
   <span class="ticker-inner">
-    LIFE INDEX - ONE CANDLE PER DAY - TRACK YOUR PROGRESS - CHART YOUR JOURNEY - GREEN = GOOD DAY - RED = LEARNING DAY - KEEP YOUR STREAK ALIVE - LIFE INDEX -
+    <span data-i18n="journal.ticker">LIFE INDEX - ONE CANDLE PER DAY - TRACK YOUR PROGRESS - CHART YOUR JOURNEY - GREEN = GOOD DAY - RED = LEARNING DAY - KEEP YOUR STREAK ALIVE - LIFE INDEX -</span>
   </span>
 </div>
 
 <main class="app-container page-content">
   <div class="page-header">
-    <h1>Daily Journal</h1>
-    <p>One candle per day. Green or red. Your life as a trading chart.</p>
+    <h1 data-i18n="journal.title">Daily Journal</h1>
+    <p data-i18n="journal.subtitle">One candle per day. Green or red. Your life as a trading chart.</p>
   </div>
 
   <div class="summary-bar">
     <div class="summary-card">
-      <div class="summary-label">Green Days</div>
+      <div class="summary-label" data-i18n="journal.summary.greenDays">Green Days</div>
       <div class="summary-value green" id="total-green">-</div>
     </div>
     <div class="summary-card">
-      <div class="summary-label">Red Days</div>
+      <div class="summary-label" data-i18n="journal.summary.redDays">Red Days</div>
       <div class="summary-value red" id="total-red">-</div>
     </div>
     <div class="summary-card">
-      <div class="summary-label">Green Streak</div>
+      <div class="summary-label" data-i18n="journal.summary.greenStreak">Green Streak</div>
       <div class="summary-value accent" id="current-streak">-</div>
     </div>
     <div class="summary-card">
-      <div class="summary-label">Avg Score</div>
+      <div class="summary-label" data-i18n="journal.summary.avgScore">Avg Score</div>
       <div class="summary-value plain" id="avg-score">-</div>
     </div>
   </div>
@@ -97,44 +98,44 @@
     <div id="entry-form-section">
       <div class="panel">
         <div class="panel-header">
-          <h2 id="form-title">New Day Entry</h2>
+          <h2 id="form-title" data-i18n="journal.form.new">New Day Entry</h2>
         </div>
         <div class="panel-body">
           <form id="entry-form" autocomplete="off">
             <div class="form-group">
-              <label for="entry-date">Date</label>
+              <label for="entry-date" data-i18n="field.date">Date</label>
               <div class="date-input-row">
                 <input type="date" id="entry-date" class="form-control" required />
-                <button type="button" id="today-btn">TODAY</button>
+                <button type="button" id="today-btn" data-i18n="action.today">Today</button>
               </div>
             </div>
 
             <div class="form-group">
-              <label>Day Type</label>
+              <label data-i18n="journal.dayType">Day Type</label>
               <div class="type-select-row">
                 <div class="type-option">
                   <input type="radio" name="entry-type" id="type-green" value="green" checked />
-                  <label for="type-green" class="green-label">Green</label>
+                  <label for="type-green" class="green-label" data-i18n="journal.green">Green</label>
                 </div>
                 <div class="type-option">
                   <input type="radio" name="entry-type" id="type-red" value="red" />
-                  <label for="type-red" class="red-label">Red</label>
+                  <label for="type-red" class="red-label" data-i18n="journal.red">Red</label>
                 </div>
               </div>
             </div>
 
             <div class="form-group">
-              <label for="entry-title">Title</label>
-              <input type="text" id="entry-title" class="form-control" placeholder="What defined this day?" required maxlength="200" />
+              <label for="entry-title" data-i18n="field.title">Title</label>
+              <input type="text" id="entry-title" class="form-control" placeholder="What defined this day?" data-i18n-placeholder="journal.titlePlaceholder" required maxlength="200" />
             </div>
 
             <div class="form-group">
-              <label for="entry-note">Note</label>
-              <textarea id="entry-note" class="form-control" placeholder="What happened? What did you learn?" rows="4" required maxlength="2000"></textarea>
+              <label for="entry-note" data-i18n="journal.note">Note</label>
+              <textarea id="entry-note" class="form-control" placeholder="What happened? What did you learn?" data-i18n-placeholder="journal.notePlaceholder" rows="4" required maxlength="2000"></textarea>
             </div>
 
             <div class="form-group">
-              <label for="entry-score">Day Score</label>
+              <label for="entry-score" data-i18n="journal.dayScore">Day Score</label>
               <div class="score-row">
                 <span class="score-label-sm">1</span>
                 <input type="range" id="entry-score" min="1" max="10" value="5" />
@@ -144,13 +145,13 @@
             </div>
 
             <div class="form-group">
-              <label for="entry-tags">Tags <span class="label-hint">(comma-separated, optional)</span></label>
-              <input type="text" id="entry-tags" class="form-control" placeholder="health, work, growth..." />
+              <label for="entry-tags"><span data-i18n="journal.tags">Tags</span> <span class="label-hint" data-i18n="journal.tagsHint">(comma-separated, optional)</span></label>
+              <input type="text" id="entry-tags" class="form-control" placeholder="health, work, growth..." data-i18n-placeholder="journal.tagsPlaceholder" />
             </div>
 
             <div class="form-actions">
-              <button type="submit" id="submit-btn" class="btn btn-primary btn-full">Add Entry</button>
-              <button type="button" id="cancel-edit-btn" class="btn btn-ghost" style="display:none;">Cancel</button>
+              <button type="submit" id="submit-btn" class="btn btn-primary btn-full" data-i18n="journal.addEntry">Add Entry</button>
+              <button type="button" id="cancel-edit-btn" class="btn btn-ghost" style="display:none;" data-i18n="action.cancel">Cancel</button>
             </div>
           </form>
         </div>
@@ -160,38 +161,38 @@
     <div class="right-col">
       <div class="chart-section">
         <div class="chart-header">
-          <span class="chart-title">Life Progress Index</span>
+          <span class="chart-title" data-i18n="journal.chartTitle">Life Progress Index</span>
           <div class="chart-legend">
-            <span class="legend-item"><span class="legend-dot green"></span>Green</span>
-            <span class="legend-item"><span class="legend-dot red"></span>Red</span>
+            <span class="legend-item"><span class="legend-dot green"></span><span data-i18n="journal.green">Green</span></span>
+            <span class="legend-item"><span class="legend-dot red"></span><span data-i18n="journal.red">Red</span></span>
           </div>
         </div>
         <div class="chart-scroll-container">
           <canvas id="candle-chart"></canvas>
         </div>
-        <div class="chart-hint">Click any candle to see details</div>
+        <div class="chart-hint" data-i18n="journal.chartHint">Click any candle to see details</div>
       </div>
 
       <div class="list-controls">
         <div class="filter-group">
-          <button class="filter-btn active" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="green">Green</button>
-          <button class="filter-btn" data-filter="red">Red</button>
+          <button class="filter-btn active" data-filter="all" data-i18n="journal.filter.all">All</button>
+          <button class="filter-btn" data-filter="green" data-i18n="journal.green">Green</button>
+          <button class="filter-btn" data-filter="red" data-i18n="journal.red">Red</button>
         </div>
-        <button id="sort-btn">Newest</button>
+        <button id="sort-btn" data-i18n="journal.sort.newest">Newest</button>
       </div>
 
       <div id="loading-state" class="loading-state">
         <div class="spinner"></div>
-        Loading entries...
+        <span data-i18n="journal.loading">Loading entries...</span>
       </div>
 
       <div id="entries-list" class="entries-list"></div>
 
       <div id="empty-state" class="empty-state" style="display:none;">
         <div class="empty-icon">-</div>
-        <h3>No entries yet</h3>
-        <p>Add your first day candle to start tracking your life chart.</p>
+        <h3 data-i18n="journal.emptyTitle">No entries yet</h3>
+        <p data-i18n="journal.emptyText">Add your first day candle to start tracking your life chart.</p>
       </div>
     </div>
   </div>
@@ -199,12 +200,13 @@
 
 <div id="candle-modal-overlay" class="modal-overlay"></div>
 <div id="candle-modal" class="candle-modal" role="dialog" aria-modal="true">
-  <button id="candle-modal-close" class="modal-close-btn" aria-label="Close">X</button>
+  <button id="candle-modal-close" class="modal-close-btn" aria-label="Close" data-i18n-aria-label="action.close">X</button>
   <div id="candle-modal-content"></div>
 </div>
 
 <div id="toast-container" aria-live="polite"></div>
 
+<script src="js/i18n.js"></script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/theme.js"></script>

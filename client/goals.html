@@ -3,45 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Trading Journal - Goals</title>
-  <meta name="description" content="Set and track your goals. Your roadmap to progress." />
+  <title data-i18n="goals.pageTitle">Trading Journal - Goals</title>
+  <meta name="description" content="Goals, schedule, tasks, and achievements." data-i18n-content="goals.metaDescription" />
   <link rel="stylesheet" href="css/themes.css" />
   <link rel="stylesheet" href="css/styles.css" />
-  <style>
-    .nav-username {
-      max-width: min(42vw, 180px);
-      min-height: 44px;
-      padding: 0.5rem 0.65rem;
-      border: 1px solid var(--border-color);
-      border-radius: 0.5rem;
-      background: var(--bg-input);
-      color: var(--text-secondary);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: clamp(11px, 2.6vw, 12px);
-      line-height: 1.1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: inline-flex;
-      align-items: center;
-    }
-    .nav-logout-btn {
-      min-height: 44px;
-      padding: 0.5rem 0.7rem;
-      font-size: clamp(11px, 2.6vw, 12px);
-      line-height: 1.1;
-    }
-    @media (max-width: 425px) {
-      .nav-username {
-        max-width: 100%;
-        flex: 1 1 100%;
-        order: 4;
-      }
-      .nav-logout-btn {
-        order: 5;
-      }
-    }
-  </style>
 </head>
 <body>
 
@@ -53,111 +18,270 @@
       <span class="brand-tag">v1.0</span>
     </a>
     <div class="navbar-nav">
-      <a href="/" class="nav-link">Journal</a>
-      <a href="/goals" class="nav-link active">Goals</a>
+      <a href="/" class="nav-link" data-i18n="nav.journal">Journal</a>
+      <a href="/goals" class="nav-link active" data-i18n="nav.goals">Goals</a>
+      <a href="/timer" class="nav-link" data-i18n="nav.timer">Timer</a>
       <span id="nav-username" class="nav-username"></span>
-      <button id="logout-btn" class="btn btn-ghost nav-logout-btn" type="button">Logout</button>
-      <button id="theme-btn">Dark Terminal</button>
+      <button id="logout-btn" class="btn btn-ghost nav-logout-btn" type="button" data-i18n="nav.logout">Logout</button>
+      <button id="theme-btn" type="button">Dark Terminal</button>
     </div>
   </div>
 </nav>
 
-<div class="ticker-tape">
-  <span class="ticker-inner">
-    YOUR GOALS - SET TARGETS - TRACK PROGRESS - COMPLETE MISSIONS - LEVEL UP YOUR LIFE - STAY FOCUSED - EXECUTE THE PLAN - YOUR GOALS -
-  </span>
+<main class="app-container page-content goals-dashboard-page goals-dashboard-v2">
+  <header class="goals-hero">
+    <div class="goals-hero-copy">
+      <span class="hero-kicker" data-i18n="goals.heroKicker">Goals Dashboard</span>
+      <h1 data-i18n="goals.heroTitle">Today&rsquo;s focus</h1>
+      <p data-i18n="goals.heroText">Track the goals that matter and keep the next task easy to see.</p>
+    </div>
+    <div class="dashboard-actions">
+      <button id="open-goal-modal-btn" class="btn btn-primary" type="button" data-tooltip="Create a goal" data-i18n="action.addGoal" data-i18n-tooltip="action.createGoal">+ Add Goal</button>
+      <button id="open-task-modal-btn" class="btn btn-ghost" type="button" data-tooltip="Create a task" data-i18n="action.addTask" data-i18n-tooltip="action.createTask">+ Add Task</button>
+      <button id="achievement-check-btn" class="btn btn-ghost btn-muted-action" type="button" data-tooltip="Refresh achievements" data-i18n="action.checkAchievements" data-i18n-tooltip="action.refreshAchievements">Check Achievements</button>
+    </div>
+  </header>
+
+  <section class="summary-bar dashboard-summary productivity-summary" aria-label="Dashboard summary">
+    <article class="summary-card productivity-stat">
+      <span class="summary-label" data-i18n="goals.summary.activeGoals">Active Goals</span>
+      <strong class="summary-value accent" id="stat-active-goals">0</strong>
+      <span class="summary-caption" data-i18n="goals.summary.activeCaption">In progress</span>
+    </article>
+    <article class="summary-card productivity-stat">
+      <span class="summary-label" data-i18n="goals.summary.completedGoals">Completed Goals</span>
+      <strong class="summary-value green" id="stat-completed-goals">0</strong>
+      <span class="summary-caption" data-i18n="goals.summary.completedCaption">Finished targets</span>
+    </article>
+    <article class="summary-card productivity-stat">
+      <span class="summary-label" data-i18n="goals.summary.todayTasks">Today&rsquo;s Tasks</span>
+      <strong class="summary-value plain" id="stat-today-tasks">0</strong>
+      <span class="summary-caption" data-i18n="goals.summary.todayCaption">For today</span>
+    </article>
+    <article class="summary-card productivity-stat">
+      <span class="summary-label" data-i18n="goals.summary.currentStreak">Current Streak</span>
+      <strong class="summary-value accent" id="stat-current-streak">0</strong>
+      <span class="summary-caption" data-i18n="goals.summary.streakCaption">Days with done tasks</span>
+    </article>
+  </section>
+
+  <div id="loading-state" class="loading-state dashboard-loading">
+    <div class="spinner"></div>
+    <span data-i18n="common.loading">Loading...</span>
+  </div>
+
+  <div id="dashboard-error" class="dashboard-error" role="alert" hidden></div>
+
+  <section class="productivity-layout" aria-label="Goals and tasks">
+    <section class="dashboard-section goals-panel">
+      <div class="section-heading">
+        <div>
+          <span class="section-eyebrow" data-i18n="goals.section.goals">Goals</span>
+          <h2 data-i18n="goals.section.progressBoard">Progress board</h2>
+        </div>
+        <div class="filter-group compact-filters goal-filters" aria-label="Filter goals">
+          <button class="filter-btn goal-filter-btn active" data-filter="all" type="button" data-i18n="goals.filter.all">All</button>
+          <button class="filter-btn goal-filter-btn" data-filter="active" type="button" data-i18n="goals.filter.active">Active</button>
+          <button class="filter-btn goal-filter-btn" data-filter="completed" type="button" data-i18n="goals.filter.done">Done</button>
+          <button class="filter-btn goal-filter-btn" data-filter="failed" type="button" data-i18n="goals.filter.failed">Failed</button>
+        </div>
+      </div>
+      <div id="goals-grid" class="goals-grid dashboard-goals-grid"></div>
+      <div id="goals-empty" class="empty-state empty-state-card" style="display:none;">
+        <h3 data-i18n="goals.empty.title">No goals yet. Create your first goal.</h3>
+        <p data-i18n="goals.empty.text">Start with one clear target and connect today&rsquo;s tasks to it.</p>
+        <button class="btn btn-primary empty-action" data-open-goal-modal type="button" data-tooltip="Create a goal" data-i18n="action.addGoal" data-i18n-tooltip="action.createGoal">+ Add Goal</button>
+      </div>
+    </section>
+
+    <section class="dashboard-section schedule-panel">
+      <div class="section-heading schedule-heading">
+        <div>
+          <span class="section-eyebrow" data-i18n="goals.schedule">Schedule</span>
+          <h2 data-i18n="goals.tasks">Tasks</h2>
+          <span id="schedule-range-label" class="schedule-range-label"></span>
+        </div>
+        <div class="schedule-controls">
+          <div class="segmented-control view-tabs" aria-label="Schedule view">
+            <button id="today-view-btn" class="segment-btn active" data-view="today" type="button" data-tooltip="Today's tasks" data-i18n="goals.tab.today" data-i18n-tooltip="goals.tooltip.todayTasks">Today</button>
+            <button id="week-view-btn" class="segment-btn" data-view="week" type="button" data-tooltip="Week overview" data-i18n="goals.tab.week" data-i18n-tooltip="goals.tooltip.week">Week</button>
+            <button id="calendar-view-btn" class="segment-btn" data-view="calendar" type="button" data-tooltip="Monthly calendar" data-i18n="goals.tab.calendar" data-i18n-tooltip="goals.tooltip.calendar">Calendar</button>
+          </div>
+          <div class="date-nav">
+            <button id="schedule-prev-btn" class="btn-icon schedule-nav-btn" type="button" title="Previous" aria-label="Previous period" data-tooltip="Previous" data-i18n-title="action.previous" data-i18n-aria-label="action.previous" data-i18n-tooltip="action.previous">&lt;</button>
+            <button id="schedule-today-btn" class="btn btn-ghost btn-sm" type="button" data-tooltip="Jump to today" data-i18n="action.today" data-i18n-tooltip="action.jumpToday">Today</button>
+            <button id="schedule-next-btn" class="btn-icon schedule-nav-btn" type="button" title="Next" aria-label="Next period" data-tooltip="Next" data-i18n-title="action.next" data-i18n-aria-label="action.next" data-i18n-tooltip="action.next">&gt;</button>
+          </div>
+        </div>
+      </div>
+      <div id="schedule-board" class="schedule-board today-view"></div>
+      <div id="schedule-empty" class="empty-state empty-state-card compact" style="display:none;">
+        <h3 data-i18n="goals.noTasksToday">No tasks for today.</h3>
+        <p data-i18n="goals.noTasksTodayText">Add one task to make the next step obvious.</p>
+        <button class="btn btn-primary empty-action" data-open-task-modal type="button" data-tooltip="Create a task" data-i18n="action.addTask" data-i18n-tooltip="action.createTask">+ Add Task</button>
+      </div>
+    </section>
+  </section>
+</main>
+
+<div id="goal-modal" class="dashboard-modal" hidden>
+  <div class="dashboard-modal-backdrop" data-close-goal-modal></div>
+  <section class="dashboard-drawer" role="dialog" aria-modal="true" aria-labelledby="goal-form-title">
+    <button class="modal-close-btn dashboard-close-btn" type="button" data-close-goal-modal aria-label="Close goal form" data-i18n-aria-label="action.close">x</button>
+    <div class="drawer-header">
+      <span class="section-eyebrow" data-i18n="goals.goalModal.kicker">Goal</span>
+      <h2 id="goal-form-title" data-i18n="goals.goalModal.addTitle">Add Goal</h2>
+      <p data-i18n="goals.goalModal.help">Use a short title, a target date, and a realistic progress value.</p>
+    </div>
+    <form id="goal-form" class="drawer-form" autocomplete="off" novalidate>
+      <div class="form-group">
+        <label for="goal-title"><span data-i18n="field.title">Title</span> *</label>
+        <input type="text" id="goal-title" class="form-control" placeholder="Funded account challenge" data-i18n-placeholder="goals.goalTitlePlaceholder" required maxlength="200" />
+        <p class="field-hint" data-i18n="goals.goalTitleHint">Keep it specific enough to recognize later.</p>
+        <p id="goal-title-error" class="field-error" aria-live="polite"></p>
+      </div>
+
+      <div class="form-group">
+        <label for="goal-desc" data-i18n="field.description">Description</label>
+        <textarea id="goal-desc" class="form-control" placeholder="What done looks like, or why it matters." data-i18n-placeholder="goals.goalDescriptionPlaceholder" rows="3" maxlength="1000"></textarea>
+      </div>
+
+      <div class="compact-form-grid">
+        <div class="form-group">
+          <label for="goal-date" data-i18n="field.targetDate">Target Date</label>
+          <input type="date" id="goal-date" class="form-control" />
+          <p class="field-hint" data-i18n="goals.goalDateHint">Optional deadline.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="goal-priority" data-i18n="field.priority">Priority</label>
+          <select id="goal-priority" class="form-control">
+            <option value="low" data-i18n="priority.low">Low</option>
+            <option value="medium" selected data-i18n="priority.medium">Medium</option>
+            <option value="high" data-i18n="priority.high">High</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="compact-form-grid">
+        <div class="form-group">
+          <label for="goal-status" data-i18n="field.status">Status</label>
+          <select id="goal-status" class="form-control">
+            <option value="active" data-i18n="status.active">Active</option>
+            <option value="completed" data-i18n="status.completed">Completed</option>
+            <option value="failed" data-i18n="status.failed">Failed</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="goal-category" data-i18n="field.category">Category</label>
+          <input type="text" id="goal-category" class="form-control" placeholder="Trading, health..." data-i18n-placeholder="goals.goalCategoryPlaceholder" maxlength="80" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="goal-progress"><span data-i18n="field.progress">Progress</span> <span id="goal-progress-display">0%</span></label>
+        <div class="score-row range-row">
+          <span class="score-label-sm">0</span>
+          <input type="range" id="goal-progress" min="0" max="100" value="0" />
+          <span class="score-label-sm">100</span>
+        </div>
+      </div>
+
+      <div class="form-actions drawer-actions">
+        <button type="submit" id="goal-submit-btn" class="btn btn-primary btn-full" data-i18n="goals.goalModal.addTitle">Add Goal</button>
+        <button type="button" id="goal-cancel-btn" class="btn btn-ghost" data-close-goal-modal data-i18n="action.cancel">Cancel</button>
+      </div>
+    </form>
+  </section>
 </div>
 
-<main class="app-container page-content">
-  <div class="page-header">
-    <h1>Goals</h1>
-    <p>Define targets. Track progress. Execute the plan.</p>
-  </div>
-
-  <div class="goals-stats-bar" id="goals-stats">
-    <span class="stat-item stat-active">0 Active</span>
-    <span class="stat-item stat-completed">0 Completed</span>
-    <span class="stat-item stat-failed">0 Failed</span>
-  </div>
-
-  <div class="goals-layout">
-    <div id="goal-form-section">
-      <div class="panel">
-        <div class="panel-header">
-          <h2 id="goal-form-title">New Goal</h2>
-        </div>
-        <div class="panel-body">
-          <form id="goal-form" autocomplete="off">
-            <div class="form-group">
-              <label for="goal-title">Title *</label>
-              <input type="text" id="goal-title" class="form-control" placeholder="What do you want to achieve?" required maxlength="200" />
-            </div>
-
-            <div class="form-group">
-              <label for="goal-desc">Description</label>
-              <textarea id="goal-desc" class="form-control" placeholder="Why does this matter? How will you get there?" rows="3" maxlength="1000"></textarea>
-            </div>
-
-            <div class="form-group">
-              <label for="goal-date">Target Date</label>
-              <input type="date" id="goal-date" class="form-control" />
-            </div>
-
-            <div class="form-group">
-              <label for="goal-status">Status</label>
-              <select id="goal-status" class="form-control">
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="failed">Failed</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="goal-progress">Progress: <span id="goal-progress-display">0%</span></label>
-              <div class="score-row">
-                <span class="score-label-sm">0</span>
-                <input type="range" id="goal-progress" min="0" max="100" value="0" />
-                <span class="score-label-sm">100</span>
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <button type="submit" id="goal-submit-btn" class="btn btn-primary btn-full">Add Goal</button>
-              <button type="button" id="goal-cancel-btn" class="btn btn-ghost" style="display:none;">Cancel</button>
-            </div>
-          </form>
-        </div>
-      </div>
+<div id="task-modal" class="dashboard-modal" hidden>
+  <div class="dashboard-modal-backdrop" data-close-task-modal></div>
+  <section class="dashboard-drawer" role="dialog" aria-modal="true" aria-labelledby="task-form-title">
+    <button class="modal-close-btn dashboard-close-btn" type="button" data-close-task-modal aria-label="Close task form" data-i18n-aria-label="action.close">x</button>
+    <div class="drawer-header">
+      <span class="section-eyebrow" data-i18n="goals.taskModal.kicker">Task</span>
+      <h2 id="task-form-title" data-i18n="goals.taskModal.addTitle">Add Task</h2>
+      <p data-i18n="goals.taskModal.help">Create a clear next action for today or schedule it for later.</p>
     </div>
+    <form id="task-form" class="drawer-form" autocomplete="off" novalidate>
+      <div class="form-group">
+        <label for="task-title"><span data-i18n="field.task">Task</span> *</label>
+        <input type="text" id="task-title" class="form-control" placeholder="Review pre-market plan" data-i18n-placeholder="goals.taskTitlePlaceholder" required maxlength="200" />
+        <p class="field-hint" data-i18n="goals.taskTitleHint">Write the action, not the whole project.</p>
+        <p id="task-title-error" class="field-error" aria-live="polite"></p>
+      </div>
 
-    <div>
-      <div class="list-controls" style="margin-bottom:1rem;">
-        <div class="filter-group">
-          <button class="filter-btn active" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="active">Active</button>
-          <button class="filter-btn" data-filter="completed">Done</button>
-          <button class="filter-btn" data-filter="failed">Failed</button>
+      <div class="form-group">
+        <label for="task-description" data-i18n="field.description">Description</label>
+        <textarea id="task-description" class="form-control" placeholder="Optional notes." data-i18n-placeholder="goals.taskDescriptionPlaceholder" rows="2" maxlength="1000"></textarea>
+      </div>
+
+      <div class="compact-form-grid">
+        <div class="form-group">
+          <label for="task-date"><span data-i18n="field.date">Date</span> *</label>
+          <input type="date" id="task-date" class="form-control" required />
+          <p id="task-date-error" class="field-error" aria-live="polite"></p>
+        </div>
+
+        <div class="form-group">
+          <label for="task-priority" data-i18n="field.priority">Priority</label>
+          <select id="task-priority" class="form-control">
+            <option value="low" data-i18n="priority.low">Low</option>
+            <option value="medium" selected data-i18n="priority.medium">Medium</option>
+            <option value="high" data-i18n="priority.high">High</option>
+          </select>
         </div>
       </div>
 
-      <div id="loading-state" class="loading-state">
-        <div class="spinner"></div>
-        Loading goals...
+      <div class="compact-form-grid">
+        <div class="form-group">
+          <label for="task-start" data-i18n="field.start">Start</label>
+          <input type="time" id="task-start" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label for="task-end" data-i18n="field.end">End</label>
+          <input type="time" id="task-end" class="form-control" />
+        </div>
       </div>
 
-      <div id="goals-grid" class="goals-grid"></div>
+      <div class="compact-form-grid">
+        <div class="form-group">
+          <label for="task-goal" data-i18n="field.goal">Goal</label>
+          <select id="task-goal" class="form-control">
+            <option value="" data-i18n="goals.taskGoalNone">No linked goal</option>
+          </select>
+          <p class="field-hint" data-i18n="goals.taskGoalHint">Optional, but useful for context.</p>
+        </div>
 
-      <div id="goals-empty" class="empty-state" style="display:none;">
-        <div class="empty-icon">-</div>
-        <h3>No goals yet</h3>
-        <p>Add your first goal to start tracking your targets.</p>
+        <div class="form-group">
+          <label for="task-color" data-i18n="field.color">Color</label>
+          <input type="color" id="task-color" class="form-control color-input" value="#58a6ff" />
+        </div>
       </div>
-    </div>
-  </div>
-</main>
+
+      <div class="form-group">
+        <label for="task-status" data-i18n="field.status">Status</label>
+        <select id="task-status" class="form-control">
+          <option value="pending" data-i18n="status.pending">Pending</option>
+          <option value="completed" data-i18n="status.done">Done</option>
+          <option value="missed" data-i18n="status.missed">Missed</option>
+        </select>
+      </div>
+
+      <div class="form-actions drawer-actions">
+        <button type="submit" id="task-submit-btn" class="btn btn-primary btn-full" data-i18n="goals.taskModal.addTitle">Add Task</button>
+        <button type="button" id="task-cancel-btn" class="btn btn-ghost" data-close-task-modal data-i18n="action.cancel">Cancel</button>
+      </div>
+    </form>
+  </section>
+</div>
 
 <div id="toast-container" aria-live="polite"></div>
 
+<script src="js/i18n.js"></script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/theme.js"></script>

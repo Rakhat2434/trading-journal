@@ -2,6 +2,7 @@
   const TOKEN_KEY = 'tj-token';
   const USER_KEY = 'tj-user';
   const PUBLIC_PAGES = ['/login', '/register', '/login.html', '/register.html'];
+  let currentAuthMessage = { key: null, isError: true };
 
   const normalizePath = (path) => {
     if (!path) return '/';
@@ -108,11 +109,12 @@
     return `tj-theme:${scope}`;
   };
 
-  const showAuthMessage = (message, isError = true) => {
+  const showAuthMessage = (message, isError = true, key = null) => {
     const messageEl = document.getElementById('auth-message');
     if (!messageEl) return;
 
-    messageEl.textContent = message || '';
+    currentAuthMessage = { key, isError };
+    messageEl.textContent = message ? translateMessage(message) : '';
     if (!message) {
       messageEl.className = 'auth-message';
       return;
@@ -133,23 +135,23 @@
       const password = document.getElementById('login-password').value;
 
       if (!email || !password) {
-        showAuthMessage('Please fill in all fields');
+        showAuthMessage(tAuth('auth.validation.fillAll'), true, 'auth.validation.fillAll');
         return;
       }
 
       const submitBtn = document.getElementById('login-submit-btn');
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Signing in...';
+      submitBtn.textContent = tAuth('auth.signingIn');
 
       try {
         const response = await AuthAPI.login({ email, password });
         setSession(response.token, response.user);
         window.location.href = '/index.html';
       } catch (error) {
-        showAuthMessage(error.message || 'invalid credentials');
+        showAuthMessage(translateMessage(error.message || tAuth('auth.error.invalidCredentials')));
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Login';
+        submitBtn.textContent = tAuth('auth.login.title');
       }
     });
   };
@@ -168,39 +170,43 @@
       const confirmPassword = document.getElementById('register-confirm-password').value;
 
       if (!username || !email || !password || !confirmPassword) {
-        showAuthMessage('Please fill in all fields');
+        showAuthMessage(tAuth('auth.validation.fillAll'), true, 'auth.validation.fillAll');
         return;
       }
 
       if (password.length < 6) {
-        showAuthMessage('password too short');
+        showAuthMessage(tAuth('auth.validation.passwordShort'), true, 'auth.validation.passwordShort');
         return;
       }
 
       if (password !== confirmPassword) {
-        showAuthMessage('passwords do not match');
+        showAuthMessage(tAuth('auth.validation.passwordMismatch'), true, 'auth.validation.passwordMismatch');
         return;
       }
 
       const submitBtn = document.getElementById('register-submit-btn');
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Creating account...';
+      submitBtn.textContent = tAuth('auth.creatingAccount');
 
       try {
         const response = await AuthAPI.register({ username, email, password });
         setSession(response.token, response.user);
         window.location.href = '/index.html';
       } catch (error) {
-        showAuthMessage(error.message || 'Registration failed');
+        showAuthMessage(translateMessage(error.message || tAuth('auth.error.registrationFailed')));
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Register';
+        submitBtn.textContent = tAuth('auth.register.title');
       }
     });
   };
 
   const initAuthPages = async () => {
     if (!isPublicPage()) return;
+
+    if (window.I18n && I18n.ready) {
+      await I18n.ready;
+    }
 
     if (window.ThemeManager && typeof window.ThemeManager.init === 'function') {
       window.ThemeManager.init();
@@ -211,6 +217,11 @@
 
     bindLoginForm();
     bindRegisterForm();
+    document.addEventListener('i18n:changed', () => {
+      if (currentAuthMessage.key) {
+        showAuthMessage(tAuth(currentAuthMessage.key), currentAuthMessage.isError, currentAuthMessage.key);
+      }
+    });
   };
 
   return {
@@ -227,10 +238,21 @@
     getThemeStorageKey,
     initAuthPages,
   };
+
+  function tAuth(key, vars) {
+    return window.I18n ? I18n.t(key, vars) : key;
+  }
+
+  function translateMessage(message) {
+    return window.I18n ? I18n.translateApiMessage(message) : message;
+  }
 })();
 
 window.Auth = Auth;
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  if (window.I18n && I18n.ready) {
+    await I18n.ready;
+  }
   Auth.initAuthPages();
 });

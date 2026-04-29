@@ -127,3 +127,55 @@ const GoalsAPI = {
       method: 'DELETE',
     }),
 };
+
+const TasksAPI = {
+  getAll: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return apiFetch(`${API_BASE}/tasks${q ? `?${q}` : ''}`);
+  },
+  getById: (id) => apiFetch(`${API_BASE}/tasks/${id}`),
+  create: (data) =>
+    apiFetch(`${API_BASE}/tasks`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (id, data) =>
+    apiFetch(`${API_BASE}/tasks/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  delete: (id) =>
+    apiFetch(`${API_BASE}/tasks/${id}`, {
+      method: 'DELETE',
+    }),
+  complete: (id) =>
+    apiFetch(`${API_BASE}/tasks/${id}/complete`, {
+      method: 'PATCH',
+    }),
+};
+
+const TimerAPI = {
+  getSessions: () => apiFetch(`${API_BASE}/timer/sessions`),
+  createSession: (data) =>
+    apiFetch(`${API_BASE}/timer/sessions`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateSession: (id, data) =>
+    apiFetch(`${API_BASE}/timer/sessions/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteSession: (id) =>
+    apiFetch(`${API_BASE}/timer/sessions/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
+const AchievementsAPI = {
+  getAll: () => apiFetch(`${API_BASE}/achievements`),
+  check: () =>
+    apiFetch(`${API_BASE}/achievements/check`, {
+      method: 'POST',
+    }),
+};

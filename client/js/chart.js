@@ -234,7 +234,7 @@ const CandleChart = (() => {
     ctx.fillStyle = cssVar('--text-muted');
     ctx.font = '14px "JetBrains Mono", monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('No entries yet. Add your first day candle.', width / 2, height / 2);
+    ctx.fillText(tChart('journal.chartEmpty'), width / 2, height / 2);
   }
 
   function pointerToCanvasCoords(event) {
@@ -287,10 +287,18 @@ const CandleChart = (() => {
   }
 
   function formatDate(dateStr) {
+    return window.I18n ? I18n.formatDate(dateStr, { utc: true, monthDay: true }) : fallbackMonthDay(dateStr);
+  }
+
+  function fallbackMonthDay(dateStr) {
     const date = new Date(dateStr);
     const month = String(date.getUTCMonth() + 1).padStart(2, '0');
     const day = String(date.getUTCDate()).padStart(2, '0');
     return `${month}/${day}`;
+  }
+
+  function tChart(key) {
+    return window.I18n ? I18n.t(key) : key;
   }
 
   return { init, render };

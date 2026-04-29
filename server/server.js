@@ -8,6 +8,9 @@ const connectDB = require('./config/db');
 const journalRoutes = require('./routes/journalRoutes');
 const goalRoutes = require('./routes/goalRoutes');
 const authRoutes = require('./routes/authRoutes');
+const taskRoutes = require('./routes/taskRoutes');
+const timerRoutes = require('./routes/timerRoutes');
+const achievementRoutes = require('./routes/achievementRoutes');
 
 if (!process.env.JWT_SECRET || !String(process.env.JWT_SECRET).trim()) {
   console.error('JWT_SECRET is not set');
@@ -25,6 +28,9 @@ app.use(express.static(path.join(__dirname, '../client')));
 app.use('/api/auth', authRoutes);
 app.use('/api/journal', journalRoutes);
 app.use('/api/goals', goalRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/timer', timerRoutes);
+app.use('/api/achievements', achievementRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Trading Journal API is running', timestamp: new Date() });
@@ -32,6 +38,10 @@ app.get('/api/health', (req, res) => {
 
 app.get('/goals', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/goals.html'));
+});
+
+app.get('/timer', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/timer.html'));
 });
 
 app.get('/login', (req, res) => {
