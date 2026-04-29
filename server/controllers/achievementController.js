@@ -1,24 +1,28 @@
 const Achievement = require('../models/Achievement');
 const FocusSession = require('../models/FocusSession');
 const Goal = require('../models/Goal');
-const JournalEntry = require('../models/JournalEntry');
 const Task = require('../models/Task');
 
 const ACHIEVEMENTS = {
   first_task_completed: {
     type: 'first_task_completed',
-    title: 'First Task Completed',
-    description: 'You completed your first scheduled task.',
+    title: 'First Step',
+    description: 'Completed one task.',
   },
-  three_tasks_completed: {
-    type: 'three_tasks_completed',
-    title: '3 Tasks Completed',
-    description: 'You completed three tasks and kept momentum moving.',
+  productive_day: {
+    type: 'productive_day',
+    title: 'Productive Day',
+    description: 'Completed three tasks in one day.',
   },
-  seven_day_consistency: {
-    type: 'seven_day_consistency',
-    title: '7-Day Consistency Streak',
-    description: 'You logged productive work across seven consecutive days.',
+  strong_week: {
+    type: 'strong_week',
+    title: 'Strong Week',
+    description: 'Completed seven tasks in one week.',
+  },
+  stability: {
+    type: 'stability',
+    title: 'Stability',
+    description: 'Completed tasks three days in a row.',
   },
   focus_master: {
     type: 'focus_master',
@@ -68,27 +72,6 @@ const maxConsecutiveDays = (keys) => {
   return best;
 };
 
-const hasSevenDaysInRecentWindow = (keys) => {
-  const unique = new Set(keys);
-  const today = startOfUtcDay(new Date());
-
-  for (let offset = 0; offset < 14; offset += 1) {
-    const windowEnd = new Date(today);
-    windowEnd.setUTCDate(today.getUTCDate() - offset);
-
-    let count = 0;
-    for (let i = 0; i < 7; i += 1) {
-      const day = new Date(windowEnd);
-      day.setUTCDate(windowEnd.getUTCDate() - i);
-      if (unique.has(dayKey(day))) count += 1;
-    }
-
-    if (count >= 7) return true;
-  }
-
-  return false;
-};
-
 const unlockAchievement = async (userId, achievement) => {
   const existing = await Achievement.findOne({ user: userId, type: achievement.type });
   if (existing) return null;
@@ -107,41 +90,50 @@ const unlockAchievement = async (userId, achievement) => {
   }
 };
 
-const getProductiveDayKeys = async (userId) => {
-  const [completedTasks, completedSessions, greenEntries] = await Promise.all([
-    Task.find({ user: userId, status: 'completed' }).select('date').lean(),
-    FocusSession.find({ user: userId, completed: true }).select('startedAt endedAt createdAt').lean(),
-    JournalEntry.find({ user: userId, type: 'green' }).select('date').lean(),
-  ]);
+const weekKey = (dateInput) => {
+  const date = startOfUtcDay(dateInput);
+  const day = date.getUTCDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  date.setUTCDate(date.getUTCDate() + mondayOffset);
+  return dayKey(date);
+};
 
-  return [
-    ...completedTasks.map((task) => dayKey(task.date)),
-    ...completedSessions.map((session) => dayKey(session.endedAt || session.startedAt || session.createdAt)),
-    ...greenEntries.map((entry) => dayKey(entry.date)),
-  ];
+const countBy = (items, getKey) => {
+  const counts = new Map();
+  items.forEach((item) => {
+    const key = getKey(item);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  return counts;
+};
+
+const maxCount = (counts) => {
+  if (!counts.size) return 0;
+  return Math.max(...counts.values());
 };
 
 const checkAchievementsForUser = async (userId) => {
   const [
-    completedTasksCount,
+    completedTasks,
     completedSessionsCount,
     completedGoalsCount,
-    productiveDayKeys,
   ] = await Promise.all([
-    Task.countDocuments({ user: userId, status: 'completed' }),
+    Task.find({ user: userId, status: 'completed' }).select('date').lean(),
     FocusSession.countDocuments({ user: userId, completed: true }),
     Goal.countDocuments({ user: userId, status: 'completed' }),
-    getProductiveDayKeys(userId),
   ]);
 
+  const taskDayKeys = completedTasks.map((task) => dayKey(task.date));
+  const dayCounts = countBy(completedTasks, (task) => dayKey(task.date));
+  const weekCounts = countBy(completedTasks, (task) => weekKey(task.date));
   const candidates = [];
 
-  if (completedTasksCount >= 1) candidates.push(ACHIEVEMENTS.first_task_completed);
-  if (completedTasksCount >= 3) candidates.push(ACHIEVEMENTS.three_tasks_completed);
-  if (maxConsecutiveDays(productiveDayKeys) >= 7) candidates.push(ACHIEVEMENTS.seven_day_consistency);
+  if (completedTasks.length >= 1) candidates.push(ACHIEVEMENTS.first_task_completed);
+  if (maxCount(dayCounts) >= 3) candidates.push(ACHIEVEMENTS.productive_day);
+  if (maxCount(weekCounts) >= 7) candidates.push(ACHIEVEMENTS.strong_week);
+  if (maxConsecutiveDays(taskDayKeys) >= 3) candidates.push(ACHIEVEMENTS.stability);
   if (completedSessionsCount >= 5) candidates.push(ACHIEVEMENTS.focus_master);
   if (completedGoalsCount >= 1) candidates.push(ACHIEVEMENTS.goal_finisher);
-  if (hasSevenDaysInRecentWindow(productiveDayKeys)) candidates.push(ACHIEVEMENTS.green_week);
 
   const unlocked = [];
   for (const candidate of candidates) {

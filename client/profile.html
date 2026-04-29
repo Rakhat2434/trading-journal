@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title data-i18n="profile.pageTitle">Trading Journal - Profile</title>
+  <meta name="description" content="Your profile, task stats, and achievements." data-i18n-content="profile.metaDescription" />
+  <link rel="stylesheet" href="css/themes.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="/" class="navbar-brand">
+      <span class="brand-icon">TJ</span>
+      <span class="brand-name">TradingJournal</span>
+      <span class="brand-tag">v1.0</span>
+    </a>
+    <div class="navbar-nav">
+      <a href="/" class="nav-link" data-i18n="nav.journal">Journal</a>
+      <a href="/goals" class="nav-link" data-i18n="nav.goals">Planner</a>
+      <a href="/timer" class="nav-link" data-i18n="nav.timer">Timer</a>
+      <a href="/profile" class="nav-link active" data-i18n="nav.profile">Profile</a>
+      <span id="nav-username" class="nav-username"></span>
+      <button id="logout-btn" class="btn btn-ghost nav-logout-btn" type="button" data-i18n="nav.logout">Logout</button>
+      <button id="theme-btn" type="button">Dark Terminal</button>
+    </div>
+  </div>
+</nav>
+
+<main class="app-container page-content profile-page">
+  <header class="profile-hero">
+    <div>
+      <span class="section-eyebrow" data-i18n="profile.kicker">Profile</span>
+      <h1 id="profile-name">-</h1>
+      <p id="profile-email">-</p>
+    </div>
+    <a class="btn btn-primary" href="/goals" data-i18n="profile.openPlanner">Open planner</a>
+  </header>
+
+  <div id="profile-loading" class="loading-state profile-loading">
+    <div class="spinner"></div>
+    <span data-i18n="profile.loading">Loading profile...</span>
+  </div>
+
+  <div id="profile-error" class="dashboard-error" role="alert" hidden></div>
+
+  <section class="profile-stats-grid" aria-label="Task statistics" data-i18n-aria-label="profile.statsLabel">
+    <article class="profile-stat-card">
+      <span data-i18n="profile.totalCompleted">Total completed tasks</span>
+      <strong id="stat-total-completed">0</strong>
+    </article>
+    <article class="profile-stat-card">
+      <span data-i18n="profile.todayCompleted">Completed today</span>
+      <strong id="stat-today-completed">0</strong>
+    </article>
+    <article class="profile-stat-card">
+      <span data-i18n="profile.weekCompleted">Completed this week</span>
+      <strong id="stat-week-completed">0</strong>
+    </article>
+  </section>
+
+  <section class="profile-achievements">
+    <div class="profile-section-heading">
+      <div>
+        <span class="section-eyebrow" data-i18n="profile.achievementsKicker">Achievements</span>
+        <h2 data-i18n="profile.achievementsTitle">Achievements</h2>
+      </div>
+      <span id="achievements-count" class="profile-count-pill">0</span>
+    </div>
+
+    <div id="achievements-list" class="achievements-list"></div>
+    <div id="achievements-empty" class="empty-state compact profile-empty" style="display:none;">
+      <h3 data-i18n="profile.emptyAchievementsTitle">No achievements yet</h3>
+      <p data-i18n="profile.emptyAchievementsText">Complete tasks in the planner to unlock your first achievement.</p>
+    </div>
+  </section>
+</main>
+
+<div id="toast-container" aria-live="polite"></div>
+
+<script src="js/i18n.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/profile.js"></script>
+</body>
+</html>

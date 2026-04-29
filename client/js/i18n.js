@@ -203,8 +203,8 @@ const I18n = (() => {
       'passwords do not match': 'auth.validation.passwordMismatch',
       'invalid credentials': 'auth.error.invalidCredentials',
       'registration failed': 'auth.error.registrationFailed',
-      'title is required': 'goals.validation.goalTitle',
-      'date is required': 'goals.validation.taskDate',
+      'title is required': 'planner.validation.text',
+      'date is required': 'planner.validation.day',
       'achievements checked.': 'goals.toast.achievementsChecked'
     };
 

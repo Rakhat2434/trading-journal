@@ -3800,3 +3800,615 @@ body.modal-open {
     transform: none;
   }
 }
+
+/* Simple weekly planner */
+.weekly-planner-page {
+  --planner-border: color-mix(in srgb, var(--border-color) 74%, transparent);
+  --planner-card: color-mix(in srgb, var(--bg-card) 88%, var(--bg-surface));
+  --planner-soft: color-mix(in srgb, var(--bg-hover) 76%, transparent);
+  --planner-green: #32d583;
+  width: min(100%, 1480px);
+  padding-top: clamp(1rem, 3vw, 1.7rem);
+  padding-bottom: 2rem;
+}
+
+.planner-topbar,
+.profile-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.planner-title-block h1,
+.profile-hero h1 {
+  margin-top: 0.2rem;
+  font-size: clamp(1.45rem, 4vw, 2.35rem);
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.planner-title-block p,
+.profile-hero p {
+  max-width: 620px;
+  margin-top: 0.45rem;
+  color: var(--text-secondary);
+}
+
+.planner-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.week-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--planner-border);
+  border-radius: 0.75rem;
+  background: var(--bg-surface);
+  padding: 0.3rem;
+}
+
+.planner-nav-btn {
+  width: 40px;
+  height: 40px;
+}
+
+.planner-add-btn {
+  min-height: 48px;
+  padding-inline: 1rem;
+}
+
+.planner-week-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+}
+
+#week-progress-label {
+  color: var(--accent);
+}
+
+.planner-loading {
+  margin-bottom: 1rem;
+}
+
+.week-planner {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(150px, 1fr));
+  gap: 0.8rem;
+  align-items: start;
+  overflow: visible;
+  animation: plannerPageIn 0.28s ease both;
+}
+
+.planner-day {
+  position: relative;
+  min-height: clamp(420px, 64vh, 720px);
+  border: 1px solid var(--planner-border);
+  border-radius: 1rem;
+  background: linear-gradient(180deg, var(--planner-card), color-mix(in srgb, var(--bg-surface) 88%, transparent));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+  padding: 0.75rem;
+  overflow: visible;
+  animation: plannerDayIn 0.28s ease both;
+  animation-delay: calc(var(--item-index, 0) * 35ms);
+}
+
+.planner-day.is-today {
+  border-color: color-mix(in srgb, var(--accent) 56%, var(--planner-border));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-glow) 52%, var(--planner-card)), var(--planner-card));
+}
+
+.planner-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--planner-border);
+}
+
+.planner-weekday {
+  display: block;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.planner-date {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--text-secondary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.planner-day-count,
+.profile-count-pill {
+  min-width: 30px;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--planner-border);
+  border-radius: 999px;
+  background: var(--planner-soft);
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+}
+
+.planner-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-top: 0.75rem;
+  overflow: visible;
+}
+
+.planner-task {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 30px;
+  gap: 0.55rem;
+  align-items: start;
+  border: 1px solid var(--planner-border);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--bg-input) 88%, transparent);
+  padding: 0.62rem;
+  transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease, opacity 0.2s ease;
+  animation: taskIn 0.24s ease both;
+  animation-delay: calc(var(--item-index, 0) * 30ms);
+  overflow: visible;
+}
+
+.planner-task:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--planner-border));
+}
+
+.planner-task.is-new {
+  animation: taskIn 0.34s ease both;
+}
+
+.planner-task.is-done {
+  background: color-mix(in srgb, var(--success-bg) 54%, var(--bg-input));
+  border-color: color-mix(in srgb, var(--planner-green) 42%, var(--planner-border));
+}
+
+.planner-task.is-completing {
+  transform: scale(0.985);
+}
+
+.planner-task.is-updating {
+  opacity: 0.78;
+}
+
+.planner-task.is-removing {
+  opacity: 0;
+  max-height: 0 !important;
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  transform: translateY(-6px);
+}
+
+.planner-task.menu-open {
+  z-index: 70;
+}
+
+.task-done-toggle {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--planner-border);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--planner-green);
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease, background-color 0.14s ease;
+}
+
+.task-done-toggle:hover,
+.task-done-toggle:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--planner-green);
+}
+
+.planner-task.is-done .task-done-toggle {
+  background: color-mix(in srgb, var(--planner-green) 20%, var(--bg-surface));
+  border-color: var(--planner-green);
+}
+
+.task-done-toggle span {
+  font-weight: 800;
+  transform: translateY(-1px);
+}
+
+.planner-task-content {
+  min-width: 0;
+}
+
+.planner-task-time {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.planner-task-content p {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.planner-task.is-done .planner-task-content p {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+.simple-task-menu {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  overflow: visible;
+}
+
+.task-menu-toggle {
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.task-menu-toggle:hover,
+.task-menu-toggle:focus-visible {
+  border-color: var(--planner-border);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.task-menu-popover {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 120;
+  min-width: 126px;
+  border: 1px solid var(--planner-border);
+  border-radius: 0.7rem;
+  background: var(--bg-surface);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+  padding: 0.35rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px) scale(0.97);
+  transform-origin: top right;
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+
+.task-menu-popover.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.task-menu-popover button {
+  width: 100%;
+  min-height: 36px;
+  border: 0;
+  border-radius: 0.48rem;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  padding: 0.45rem 0.55rem;
+  cursor: pointer;
+}
+
+.task-menu-popover button:hover,
+.task-menu-popover button:focus-visible {
+  background: var(--bg-hover);
+}
+
+.task-menu-popover button:last-child {
+  color: var(--candle-red);
+}
+
+.planner-empty-day {
+  display: grid;
+  place-items: center;
+  min-height: 90px;
+  border: 1px dashed var(--planner-border);
+  border-radius: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0.8rem;
+}
+
+.planner-empty-day span {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--planner-border);
+  background: var(--planner-soft);
+  animation: emptyBreathe 2.4s ease-in-out infinite;
+}
+
+.planner-empty-day p {
+  font-size: 0.78rem;
+}
+
+.planner-modal .dashboard-drawer,
+.profile-page .panel {
+  border-radius: 1rem;
+}
+
+.planner-drawer {
+  max-width: 480px;
+}
+
+@keyframes plannerPageIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes plannerDayIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes taskIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Profile */
+.profile-page {
+  width: min(100%, 1100px);
+  padding-top: clamp(1rem, 3vw, 1.7rem);
+  padding-bottom: 2rem;
+}
+
+.profile-hero {
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, var(--bg-card), color-mix(in srgb, var(--bg-surface) 86%, transparent));
+  padding: clamp(1rem, 3vw, 1.4rem);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+}
+
+.profile-hero h1 {
+  font-size: clamp(1.35rem, 4vw, 2rem);
+}
+
+.profile-loading {
+  margin: 1rem 0;
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0;
+}
+
+.profile-stat-card {
+  border: 1px solid var(--border-color);
+  border-radius: 0.9rem;
+  background: var(--bg-card);
+  padding: 1rem;
+}
+
+.profile-stat-card span {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.profile-stat-card strong {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+  line-height: 1;
+}
+
+.profile-achievements {
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  background: var(--bg-card);
+  padding: clamp(1rem, 3vw, 1.25rem);
+}
+
+.profile-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.profile-section-heading h2 {
+  margin-top: 0.15rem;
+  letter-spacing: 0;
+}
+
+.achievements-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.achievement-card {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+  border: 1px solid var(--border-color);
+  border-radius: 0.85rem;
+  background: var(--bg-input);
+  padding: 0.85rem;
+  animation: taskIn 0.24s ease both;
+  animation-delay: calc(var(--item-index, 0) * 35ms);
+}
+
+.achievement-icon {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 44%, var(--border-color));
+  background: var(--accent-glow);
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+}
+
+.achievement-card h3 {
+  margin-bottom: 0.2rem;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.achievement-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.achievement-card time {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+}
+
+.profile-empty {
+  border: 1px dashed var(--border-color);
+  border-radius: 0.85rem;
+  background: var(--bg-input);
+}
+
+@media (max-width: 980px) {
+  .week-planner {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-day {
+    min-height: auto;
+  }
+
+  .planner-task-list {
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .planner-topbar,
+  .profile-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .planner-toolbar,
+  .week-controls,
+  .planner-add-btn,
+  .profile-hero .btn {
+    width: 100%;
+  }
+
+  .week-controls {
+    justify-content: space-between;
+  }
+
+  .planner-add-btn,
+  .profile-hero .btn {
+    min-height: 52px;
+  }
+
+  .planner-week-strip {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .profile-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-menu-popover {
+    right: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .weekly-planner-page,
+  .profile-page {
+    padding-inline: 0.75rem;
+  }
+
+  .planner-day {
+    border-radius: 0.85rem;
+    padding: 0.7rem;
+  }
+
+  .planner-task {
+    grid-template-columns: 34px minmax(0, 1fr) 34px;
+    padding: 0.7rem;
+  }
+
+  .planner-task-content p {
+    font-size: 0.92rem;
+  }
+
+  .planner-modal .dashboard-drawer {
+    max-width: none;
+    min-height: auto;
+    border-radius: 1rem 1rem 0 0;
+  }
+}
